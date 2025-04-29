@@ -1,14 +1,26 @@
-# Code API
+# Codes
 
-You can run javascript when right clicking code blocks and press to code boards.
-This is only available to owners of worlds lobbies.
-The javascript can interact with the Bloxd.io game api.
-
-Please use [our discord](https://discord.gg/vwMp5y25RX) to report any issues you come across or features you'd like to see added.
+This is a collection of codes which i have either made or found, all placed here,
+they are split into 3 parts
+- Code Blocks, codes which only needs a code block
+- World Code, codes which live in world code, and may also need code blocks to function
+- Board Code, uses of `press to ...` signs to make codes
+in each of these, they will have a title and code attached, each code is unrelated to another unless stated otherwise
 
 ## Code Blocks
 
-- World owners can find these by searching in the creative menu
-- No need to add `press to code`, this text is only needed for code boards, and will automatically be removed
-- If you want to run code without opening the code editor, you can trigger the code block by right clicking an adjacent `press to code` board instead
+## World Code
+### Timer \(1000 seconds\)
+```js
+a=Date.now()
+function tick(dt){
+  if(Date.now()-a>1000){
+    a=Date.now()
+    //code
+  }
+}
+```
+## Board Code
+
+## Outro
 
