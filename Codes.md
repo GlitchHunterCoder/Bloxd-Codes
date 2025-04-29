@@ -129,14 +129,17 @@ Execute
 //getter
 var List = ListStore.split(",")
 
-//Code invol
+//Code involving List
 
 //sender
 ListStore=String(List)
 ```
 It works because its triggered, it stores the list as a string, and so packaging a list as a variable, to send off.
+
 when another code block is triggered, it gets the packaged list variable, and unpacks it back to a list to use
+
 \(This was made when lists couldnt be Global, That has now changed\)
+
 ## World Code
 #### Timer \(1000 seconds\)
 ```js
