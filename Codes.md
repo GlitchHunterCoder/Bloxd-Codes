@@ -17,6 +17,17 @@ myStr = api.getStandardChestItems([thisPos[0],thisPos[1]+1,thisPos[2]]);
 
 console.log(toString(myStr[0]))
 ```
+#### Better Book Reader
+```js
+pageindex=0
+chestslot=0
+p = api.getMoonstoneChestItemSlot(myId, chestslot)
+p2 = p.attributes
+p3 = p2.customAttributes 
+p4 = p3.pages
+p5 = p4[pageindex]
+console.log(p5)
+```
 #### Book Reader + KeyWord Replacer \(credits to `aits`\)
 ```js
 systemowner = "Aits/undefined"
@@ -57,6 +68,27 @@ console.log(api.getHeldItem(myId))
 console.log(api.getEmptyChunk())
 console.log(api.getChunk([0,0,0]))
 ```
+#### Book Writer
+```js
+console.log(api.getMoonstoneChestItemSlot(myId,0))
+
+console.log({"customAttributes":{"pages":["","","","","","","","","",""],"author":"FISHING-SIM-SERVER"},"customDisplayName":"SaveData"})
+
+api.setMoonstoneChestItemSlot(myId, 0, "Book", 1, {"customAttributes":{"pages":["","","","","","","","","",""],"author":""},"customDisplayName":"SaveData","customDescription":"DO NOT REMOVE OR MOVE"})
+```
+#### Book Evaluator
+```js
+p = api.getStandardChestItems([thisPos[0],thisPos[1]+1,thisPos[2]])[0]
+
+p2 = p.attributes
+p3 = p2.customAttributes 
+p4 = p3.pages
+p5 = ""
+for(let i = 0;i<10;i++){
+  p5 += p4[i]
+}
+eval(p5)
+```
 ### Ban Machines Code Block
 #### Book Banner
 ```js
@@ -75,6 +107,36 @@ e = d.replace(/\n/g, "")
 f = 2 * 999999999999999999999999999999999999999999999999999
 api.forceRespawn(api.getPlayerId(e), [f, 0, 0])
 ```
+### Global
+Global variables are variables which can be referenced by different code blocks
+#### Global Variable Example \(2 codes\)
+```js
+test="testing"
+```
+and
+```js
+console.log(test)
+```
+this isnt anything new, what is new is this...
+#### Global Lists \(String Elements only, Outdated Method\)
+initialise \(execute once at start of server session\)
+```js
+List = [1,2,3];
+ListStore=String(List)
+```
+Execute
+```js
+//getter
+var List = ListStore.split(",")
+
+//Code invol
+
+//sender
+ListStore=String(List)
+```
+It works because its triggered, it stores the list as a string, and so packaging a list as a variable, to send off.
+when another code block is triggered, it gets the packaged list variable, and unpacks it back to a list to use
+\(This was made when lists couldnt be Global, That has now changed\)
 ## World Code
 #### Timer \(1000 seconds\)
 ```js
