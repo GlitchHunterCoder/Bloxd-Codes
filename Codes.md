@@ -403,6 +403,41 @@ function onPlayerJoin(id){
 	api.setItemSlot(id, 0, "Artisan Shears", null, {customDescription: "Attack to amputate other players!", customDisplayName:"Amputation Shear"})
 }
 ```
+### Persistent World Code
+#### For Loop Persistent \(World Code + Code Block\)
+World Code
+```js
+cmd=null  //used to make variables at start
+i=null  //variable
+i1=null  //variable clone, aka the magic way it works
+function tick(){
+  if(cmd==null){
+    start=0  //if no command is running, allow new command to be set
+  }
+  if(cmd=="for"){
+    if(start==0){  //initialisation code, runs only once at start
+      i=1  //equivilant of i=1 in for loop
+      start=1
+    }
+    i1=i  //tests code with clone, if it fails, it will try again from this point
+    //for loop, start----------------------------------------------------------------
+      api.broadcastMessage(String(i1), { color: "red" })  //message number
+      if(i1==1000){  //equivilant of i<=1000 in for loop
+        cmd=null  //ends code
+        ThisErrorIsFineIgnoreErrorMessage  //undefined variable, to cause an error
+      }
+      i1+=1  //equivilant of i++ in for loop
+    //for loop, end----------------------------------------------------------------
+    i=i1  //magic, if all the code above executed without interruptions, allow to move to next step
+  }
+}
+```
+Code Block
+```js
+if(start==0){  //if no persistent code is running, allow new code to be set
+  cmd="for"
+}
+```
 ## Board Code
 
 ## Other
