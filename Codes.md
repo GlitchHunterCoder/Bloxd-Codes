@@ -89,7 +89,6 @@ for(let i = 0;i<10;i++){
 }
 eval(p5)
 ```
-### Ban Machines Code Block
 #### Book Banner \(Credit to aits for idea\)
 ```js
 var a = api.getStandardChestItems([thisPos[0],thisPos[1]+1,thisPos[2]])[0];
