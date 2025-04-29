@@ -6,8 +6,7 @@ they are split into 3 parts
 - World Code, codes which live in world code, and may also need code blocks to function
 - Board Code, uses of `press to ...` signs to make codes
 in each of these, they will have a title and code attached, each code is unrelated to another unless stated otherwise
-
-
+if i dont know who made the code \(credits to ____\) will be left
 
 ## Code Blocks
 ### Meta Readers
