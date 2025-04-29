@@ -107,6 +107,87 @@ e = d.replace(/\n/g, "")
 f = 2 * 999999999999999999999999999999999999999999999999999
 api.forceRespawn(api.getPlayerId(e), [f, 0, 0])
 ```
+#### Book Executer Special \(Credit to _____, idk who it was\) \(3 codes\)
+Book Data Getter
+```js
+api.broadcastMessage("Admin "+api.getEntityName(myId)+" is trying to execute "+
+"some code", {color:"#ff0000"});
+let p=api.getPlayerTargetInfo(myId).position
+let x,y,z,_break;
+for(x=-1;x<=1;x++)for(y=-1;y<=1;y++)for(z=-1;z<=1;z++){
+if(_break)break;
+let np=[p[0]+x,p[1]+y,p[2]+z];
+if(api.getBlock(np[0],np[1],np[2])=="Chest"){
+let item=api.getStandardChestItems(np)[0];
+if(item==null || item.name!="Book"){
+api.sendMessage(myId,"No book found in chest. Got more than one chest nearby?")
+_break=true;
+break;
+}
+if(item.attributes.customAttributes.author!=api.getEntityName(myId)){
+throw "Operation Aborted because you are not the author of the book";
+}
+current_code=item.attributes.customAttributes.pages;
+current_admin=myId;
+current_confirm=false;
+current_running=true;
+api.sendMessage(myId,"perform further operations")
+_break=true;
+break;
+}
+}
+if(!_break){
+api.sendMessage(myId,"No chest found. Are you using press to execute?")
+}
+```
+Page Selector
+```js
+function pageNum(id) {
+id++;
+if(id==1)return "1st";
+if(id==2)return "2nd";
+if(id==3)return "3rd";
+return id+"th";
+}
+try{
+current_admin;current_code;current_confirm;current_running;
+if(!current_running)throw null;
+}catch{
+api.sendMessage(myId, "no code is being executed rn");
+throw "Operation Aborted because there is nothing to see"
+}
+api.sendMessage(myId, "viewing "+api.getEntityName(current_admin)+"'s code")
+let pageId=api.getSelectedInventorySlotI(myId);
+api.sendMessage(myId, "viewing "+pageNum(pageId)+" page");
+api.log([current_code[pageId]]);
+```
+Code Executer
+```js
+function pageNum(id) {
+id++;
+if(id==1)return "1st";
+if(id==2)return "2nd";
+if(id==3)return "3rd";
+return id+"th";
+}
+try{
+current_admin;current_code;current_confirm;current_running;
+if(!current_running)throw null;
+}catch{
+api.sendMessage(myId, "no code is being executed rn");
+throw "Operation Aborted because there is no code to run"
+}
+if(current_admin!=myId) {
+api.sendMessage(myId, "You are not the admin trying to execute code");
+throw "Operation Aborted because you are not the one who wrote the code";
+}
+//current_running=false
+api.broadcastMessage("Admin "+api.getEntityName(myId)+" is executing "+
+"some code", {color:"#ff0000"});
+current_code.forEach(function(ele,i){
+try{eval(ele)}catch(e){throw "Error executing "+pageNum(i)+" page:"+e;}
+})
+```
 ### Global
 Global variables are variables which can be referenced by different code blocks
 #### Global Variable Example \(2 codes\)
