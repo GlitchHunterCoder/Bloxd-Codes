@@ -960,6 +960,33 @@ Code Block to get World Edit Axe
 ```js
  api.giveItem(myId, "Moonstone Axe", 1, {customDisplayName: "WorldEdit Tool", customDescription: "Set EZ WorldEdit Positions"});
 ```
+#### Helpful Axes
+- Wood Axe-tp anywhere u look (up to 150 blocks distance)
+- Stone Axe-tp 1 block in the direction u look (use to go thru blocks)
+- Iron Axe-Travel Fast in the direction you look
+- Gold Axe-Travel Even Faster in the direction you look
+- Diamond Axe-Stop In Place (reset velocity)
+- Moonstone Axe-Sums up all features
+  - Crouch+Alt-Travel Fast at a decent pace
+  - Crouch+Normal-Stop In Place
+  - Stand+Alt-tp 1 block in the direction u look
+  - Stand+Normal-Tp anywhere you look
+```js
+onPlayerClick = (e, $) => {
+  if ("Iron Axe" == (heldItem = api.getHeldItem(e).name) && (cdir = api.getPlayerFacingInfo(e).dir, api.setVelocity(e, 30 * cdir[0], 30 * cdir[1], 30 * cdir[2])), "Diamond Axe" == heldItem && api.setVelocity(e, 0, 0, 0), "Gold Axe" == heldItem && (cdir = api.getPlayerFacingInfo(e).dir, api.setVelocity(e, 100 * cdir[0], 100 * cdir[1], 100 * cdir[2])), "Wood Axe" == heldItem) {
+    cdir = api.getPlayerFacingInfo(e).dir, cpos = api.getPlayerFacingInfo(e).camPos, found = !1;
+    for (let o = 0; o < 30 && !1 == found; o++) null != (block = api.raycastForBlock(cpos, cdir)) && (block = block.adjacent, found = !0, block[0] += .5, block[2] += .5, api.setPosition(e, block)), cpos = [cpos[0] + 5 * cdir[0], cpos[1] + 5 * cdir[1], cpos[2] + 5 * cdir[2]]
+  }
+  if ("Stone Axe" == heldItem && (cdir = api.getPlayerFacingInfo(e).dir, cpos = [(cpos = api.getPosition(e))[0] + 1 * cdir[0], cpos[1], cpos[2] + 1 * cdir[2]], Math.abs(cdir[1]) > .9 && (cpos[1] += 1.001 * cdir[1]), api.setPosition(e, cpos)), "Moonstone Axe" == heldItem) {
+    if (crouch = api.isPlayerCrouching(e), cdir = api.getPlayerFacingInfo(e).dir, cpos = api.getPlayerFacingInfo(e).camPos, crouch) $ ? api.setVelocity(e, 50 * cdir[0], 50 * cdir[1], 50 * cdir[2]) : api.setVelocity(e, 0, 0, 0);
+    else if ($) cdir = api.getPlayerFacingInfo(e).dir, cpos = [(cpos = api.getPosition(e))[0] + 1 * cdir[0], cpos[1], cpos[2] + 1 * cdir[2]], Math.abs(cdir[1]) > .9 && (cpos[1] += 1.001 * cdir[1]), api.setPosition(e, cpos);
+    else {
+      found = !1;
+      for (let t = 0; t < 30 && !1 == found; t++) null != (block = api.raycastForBlock(cpos, cdir)) && (block = block.adjacent, found = !0, block[0] += .5, block[2] += .5, api.setPosition(e, block)), cpos = [cpos[0] + 5 * cdir[0], cpos[1] + 5 * cdir[1], cpos[2] + 5 * cdir[2]]
+    }
+  }
+};
+```
 #### setTimeOut World Code \( + Code Block Usage\)
 World Code \(Minified\)
 ```js
