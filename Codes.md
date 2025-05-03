@@ -351,8 +351,97 @@ console.log(styTxt("hello <c red><w bold>Red,bold <w>not bold <c#00F>blue <st it
 //Styled Text Raw
 console.log("hello <c red><w bold>Red,bold <w>not bold <c#00F>blue <st italic>Italic<w 100>Thin <w900><s 30px>Big<o 0.2>Fad<cyellow>ed<r>Reset all\\<c red>escaped")
 ```
-###
+### Ray Casting
+#### Laser
+```js
+onPlayerUsedThrowable = (id, item, itemId) => {
+    if (item !== "Arrow") return;
+    /*laser variables, can be replaced in the code with constants if you want to remove these*/
+    const amount = 8; //laser length
+    const spreadDist = 2 //distants between each particle 
+    const logRayResults = false // set to true if you want to log the entities found, in chat
+    const beamStrength = 70 // set the damage of the beam
+    const beamTexture = "bubble" // set the texture of the beam
+    /* laser code */
+    let facing = api.getPlayerFacingInfo(id).dir;
+    let pos = api.getPosition(id);
+    
+    api.broadcastSound("cannonFire3", 1, 5, {
+        playerIdOrPos: id
+        , maxHearDist: 15
+    });
+    for (let i = 0; i < amount; i++) {
+        
+        const magnitude = Math.sqrt(
+            facing[0] ** 2 + facing[1] ** 2 + facing[2] ** 2
+        );
+        const normalized = [
+    facing[0] / magnitude
+    , facing[1] / magnitude
+    , facing[2] / magnitude
+];
+        
+        
+        api.playParticleEffect({
+            dir2: [0, 0, 0]
+            , dir1: [facing[0], facing[0], facing[2]]
+            , pos1: [pos[0] += ((i + spreadDist) * facing[0]), pos[1] += ((i + spreadDist) * facing[1]), pos[2] += ((i + spreadDist) * facing[2])]
+            , pos2: [pos[0] += ((i + spreadDist) * facing[0]), pos[1] += ((i + spreadDist) * facing[1]), pos[2] += ((i + spreadDist) * facing[2])]
+            , texture: beamTexture
+            , minLifeTime: 0.05 + (i / 100)
+            , maxLifeTime: 0.05 + (i / 100)
+            , minEmitPower: 2
+            , maxEmitPower: 2
+            , minSize: 0.5
+            , maxSize: 3 - (i / 10)
+            , manualEmitCount: 10
+            , gravity: [0, -2, 0]
+            , colorGradients: [
+                {
+                    timeFraction: 0
+                    , minColor: [255, 81, 0, 1]
+                    , maxColor: [253, 3, 3, 1],
+                    //rgb(255, 81, 0)
+        }
+    , ]
+            , velocityGradients: [
+                {
+                    timeFraction: 0
+                    , factor: 1
+                    , factor2: 1
+        , }
+    , ]
+            , blendMode: 1
+        , });
+        
+        let xyz = [
+    pos[0] + normalized[0] * i
+    , pos[1] + normalized[1] * i
+    , pos[2] + normalized[2] * i
+];
+        
+        /*collision detection, size varries based on spread distance, change that if you dont like it */
+        let hit = api.getEntitiesInRect([xyz[0] - spreadDist, xyz[1] - 2, xyz[2] - spreadDist], [xyz[0] + spreadDist, xyz[1] + 2, xyz[2] + spreadDist]);
+        if (logRayResults) api.log("ray results:", hit);
+        //applies damage
+        for (let target of hit) {
+            if (target !== id) {
+                api.attemptApplyDamage({
+                    eId: id
+                    , hitEId: target
+                    , attemptedDmgAmt: beamStrength
+                    , withItem: "Red Ceramic"
+                    , attackDir: facing
+                    , showCritParticles: true
+                    , reduceVerticalKbVelocity: false
+                });
+            }
+        }
+    }
+};
+```
 ## World Code
+### Simple
 #### Timer \(1000 seconds\)
 ```js
 a=Date.now()
@@ -363,8 +452,146 @@ function tick(dt){
   }
 }
 ```
+### Mods
+#### Gravity
+```js
+let gravityId = new Set()
+let lastParticleTime = 0
+let downdraftCooldown = {}
+
+onPlayerJoin = (playerId) => {
+  api.giveItem(playerId, "Iron Spade", 1, { customDisplayName: "Downdraft" })
+}
+
+onPlayerClick = (playerId, x, y, z, face, itemName) => {
+  let held = api.getHeldItem(playerId)
+  if (
+    held &&
+    held.name === "Iron Spade" &&
+    held.attributes?.customDisplayName === "Downdraft"
+  ) {
+    let now = api.now()
+    if (downdraftCooldown[playerId] && now - downdraftCooldown[playerId] < 1000) {
+      return
+    }
+    let wasFloating = gravityId.has(playerId)
+    downdraftCooldown[playerId] = now
+    api.applyImpulse(playerId, 0, -15, 0)
+    if (wasFloating) {
+      api.playSound(playerId, "glass3", 1, 1, { playerIdOrPos: playerId })
+    }
+    gravityId.delete(playerId)
+  }
+}
+
+onPlayerAltAction = (playerId) => {
+  let held = api.getHeldItem(playerId)
+  if (
+    held &&
+    held.name === "Iron Spade" &&
+    held.attributes?.customDisplayName === "Downdraft"
+  ) {
+    return
+  }
+  if (gravityId.has(playerId)) {
+    gravityId.delete(playerId)
+    api.playSound(playerId, "glass2", 1, 1, { playerIdOrPos: playerId })
+  } else {
+    gravityId.add(playerId)
+    api.playSound(playerId, "sweep6", 1, 1, { playerIdOrPos: playerId })
+  }
+}
+
+tick = () => {
+  let now = api.now()
+  for (let playerId of api.getPlayerIds()) {
+    if (gravityId.has(playerId)) {
+      api.applyImpulse(playerId, 0, 2.2, 0)
+      if (now - lastParticleTime >= 100) {
+        let pos = api.getPosition(playerId)
+        let x = pos[0]
+        let y = pos[1] + 1
+        let z = pos[2]
+        api.playParticleEffect({
+          dir1: [-0.3, -0.3, -0.3],
+          dir2: [0.3, 0.3, 0.3],
+          pos1: [x - 0.5, y, z - 0.5],
+          pos2: [x + 0.5, y + 1, z + 0.5],
+          texture: "critical_hit",
+          minLifeTime: 0.2,
+          maxLifeTime: 0.5,
+          minEmitPower: 1.2,
+          maxEmitPower: 2,
+          minSize: 0.2,
+          maxSize: 0.35,
+          manualEmitCount: 10,
+          gravity: [0, -10, 0],
+          colorGradients: [
+            { timeFraction: 0, minColor: [0, 100, 255, 1], maxColor: [0, 255, 255, 1] }
+          ],
+          velocityGradients: [
+            { timeFraction: 0, factor: 1, factor2: 1 }
+          ],
+          blendMode: 1
+        })
+      }
+    }
+  }
+  if (now - lastParticleTime >= 100) {
+    lastParticleTime = now
+  }
+}
+```
+#### Random Movement
+```js
+// Initial position of the "Finish Block" (replace "TNT" with any valid block name if needed)
+let finishBlockPos = [0, 1, 0];
+
+// List of possible directions to move (left, right, forward, back)
+const directions = [
+    [-1, 0, 0], // left
+    [1, 0, 0],  // right
+    [0, 0, -1], // forward
+    [0, 0, 1]   // back
+];
+
+// Define the movement magnitude multiplier
+const movementMagnitude = 1;
+
+// List of possible block names to randomly place as a trail
+const blockTypes = [
+    "White Concrete"
+];
+
+tick = () => {
+    // Randomly select a direction
+    const randomDirectionIndex = Math.floor(Math.random() * directions.length);
+    const direction = directions[randomDirectionIndex];
+
+    // Calculate the new position by multiplying the direction by the movement magnitude
+    const newX = finishBlockPos[0] + direction[0] * movementMagnitude;
+    const newY = finishBlockPos[1]; // Keep the Y the same to move on the ground
+    const newZ = finishBlockPos[2] + direction[2] * movementMagnitude;
+
+    // Check if the new position is in a loaded chunk
+    if (api.isBlockInLoadedChunk(newX, newY, newZ)) {
+        // Randomly select a block type for the trail
+        const randomBlockIndex = Math.floor(Math.random() * blockTypes.length);
+        const randomBlock = blockTypes[randomBlockIndex];
+
+        // Place the randomly selected block at the old position
+        api.setBlock(finishBlockPos[0], finishBlockPos[1], finishBlockPos[2], randomBlock);
+
+        // Set the new position to "TNT" or any other valid block name
+        api.setBlock(newX, newY, newZ, "Finish Block");
+
+        // Update the finishBlockPos to the new position
+        finishBlockPos = [newX, newY, newZ];
+    }
+};
+```
 ### PvP Codes
-#### Amputation Code \(Credit to `MrChestplate`\) (NO CREDIT TO HIS LICENSE HE PUT IN CODE, see other for license)
+#### Amputation Code \(Credit to `MrChestplate`\) \(NO CREDIT TO HIS LICENSE HE PUT IN CODE, see other for license\)
 ```js
 //License has been moved to the Wall Of Shame
 dicss=["TorsoNode", "HeadMesh", "ArmRightMesh", "ArmLeftMesh","LegLeftMesh", "LegRightMesh"]
@@ -403,6 +630,255 @@ function onPlayerJoin(id){
 	api.setItemSlot(id, 0, "Artisan Shears", null, {customDescription: "Attack to amputate other players!", customDisplayName:"Amputation Shear"})
 }
 ```
+#### Crystal PvP \(Credit to `MrChestplate`\) \(NO CREDIT TO HIS OBSCURIFICATION see other for original Code ,Mostly Taken Out\)
+```js
+sos = "cannonFire2";
+anchors = {};
+function p3(khiyon, chryel, ellody) {
+  api.playParticleEffect({dir1: [-1, -1, -1], dir2: [1, 1, 1], pos1: [khiyon - 1, chryel, ellody - 1], pos2: [khiyon + 1, chryel + 1, ellody + 1], texture: "glint", minLifeTime: 0.5, maxLifeTime: 1, minEmitPower: 2, maxEmitPower: 2, minSize: 0.25, maxSize: 0.5, manualEmitCount: 100, gravity: [0, 0, 0], colorGradients: [{timeFraction: 0, minColor: [0, 255, 0, 1], maxColor: [0, 150, 0, 1]}], velocityGradients: [{timeFraction: 0, factor: 1, factor2: 1}], blendMode: 1});
+  api.playParticleEffect({dir1: [-1, -1, -1], dir2: [1, 1, 1], pos1: [khiyon - 1, chryel, ellody - 1], pos2: [khiyon + 1, chryel + 1, ellody + 1], texture: "glint", minLifeTime: 0.5, maxLifeTime: 1, minEmitPower: 2, maxEmitPower: 2, minSize: 0.25, maxSize: 0.5, manualEmitCount: 100, gravity: [0, 0, 0], colorGradients: [{timeFraction: 0, minColor: [255, 255, 0, 1], maxColor: [255, 255, 0, 1]}], velocityGradients: [{timeFraction: 0, factor: 1, factor2: 1}], blendMode: 1});
+}
+tasks = [];
+function tick() {
+  if (tasks.length > 0) {
+    for (i = 0; i < tasks.length; i++) {
+      task = tasks[i];
+      if (task[0] === 0) {
+        coord1 = task[1];
+        coord2 = task[2];
+        explode(coord1, coord2);
+      }
+      tasks.splice(i, 1);
+    }
+  }
+}
+function explode(jaleesia, taquia) {
+  for (x = jaleesia[0]; x < taquia[0]; x++) {
+    for (y = jaleesia[1]; y < taquia[1]; y++) {
+      for (z = jaleesia[2]; z < taquia[2]; z++) {
+        curBlock = api.getBlock(x, y, z);
+        if (curBlock !== "Obsidian" && curBlock !== "Bedrock") {
+          api.setBlock(x, y, z, "Air");
+        }
+      }
+    }
+  }
+}
+function onPlayerClick(hannha, heleyna) {
+  slotidx = api.getSelectedInventorySlotI(hannha);
+  itm = api.getItemSlot(hannha, slotidx);
+  if (itm !== null) {
+    if (itm.attributes.customDisplayName === "Extra Life" && heleyna && !api.getEffects(hannha).includes("Extra Life")) {
+      api.applyEffect(hannha, "Extra Life", null, {displayName: "Extra Life", icon: "Gold Spade"});
+      api.setItemSlot(hannha, slotidx, "Gold Spade", 0);
+    }
+  }
+  target = api.getPlayerTargetInfo(hannha);
+  if (target) {
+    blockpos = target.position;
+    slotidx = api.getSelectedInventorySlotI(hannha);
+    itm = api.getItemSlot(hannha, slotidx);
+    if (heleyna) {
+      if (target.blockID === 125 && itm.name === "Golden Decoration") {
+        api.setBlock(target.position[0], target.position[1], target.position[2], "Dim Lamp On");
+      }
+    } else {
+      if (target.blockID === 124 && itm.name !== "Golden Decoration") {
+        anchors[target.position] = 0;
+        coord1 = [blockpos[0] - 4, blockpos[1] - 4, blockpos[2] - 4];
+        coord2 = [blockpos[0] + 4, blockpos[1] + 5, blockpos[2] + 4];
+        api.playSound(hannha, sos, 0.5, 1);
+        enties = api.getEntitiesInRect(coord1, coord2);
+        damage = 125;
+        prot = 0.6;
+        for (i = 0; i < enties.length; i++) {
+          id1 = enties[i];
+          posid1 = api.getPosition(id1);
+          if ((api.getPlayerIds().includes(id1) || api.getMobIds().includes(id1)) && api.isAlive(id1)) {
+            dist = Math.sqrt(Math.pow(blockpos[0] + 0.5 - posid1[0], 2) + Math.pow(blockpos[1] + 0.5 - posid1[1], 2) + Math.pow(blockpos[2] + 0.5 - posid1[2], 2));
+            api.playSound(id1, sos, 0.5, 1);
+            force = api.calcExplosionForce(id1, 1, 0.3, 5, [blockpos[0] + 0.5, blockpos[1] + 0.5, blockpos[2] + 0.5], true).force;
+            slotidx = api.getSelectedInventorySlotI(id1);
+            itm = api.getItemSlot(id1, slotidx);
+            if (api.getHealth(id1) - Math.round((-20 * dist + 130) * (1 - prot)) > 5 && !(api.getEffects(id1).includes("Extra Life") || itm.attributes.displayName === "Extra Life")) {
+              api.applyHealthChange(id1, -Math.round((-20 * dist + 130) * (1 - prot)), hannha);
+            } else if ((api.getEffects(id1).includes("Extra Life") || itm && itm.attributes.displayName === "Extra Life") && api.getHealth(id1) - Math.round((-20 * dist + 130) * (1 - prot)) < 5) {
+              poser = api.getPosition(id1);
+              if (itm && itm.attributes.displayName === "Extra Life") {
+                api.setItemSlot(id1, slotidx, "Gold Spade", 0);
+              }
+              api.setHealth(id1, 10);
+              api.applyEffect(id1, "Health Regen", 4e4, {inbuiltLevel: 2});
+              api.setShieldAmount(id1, 20);
+              api.playSound(id1, "cashRegister", 1, 1);
+              api.removeEffect(id1, "Extra Life");
+              p3(poser[0], poser[1], poser[2]);
+            } else {
+              api.applyHealthChange(id1, -Math.round((-20 * dist + 130) * (1 - prot)), {lifeformId: hannha, withItem: "Dim Lamp On"});
+            }
+            api.applyImpulse(id1, force[0], force[1], force[2]);
+          }
+        }
+        tasks.push([0, coord1, coord2]);
+      } else {
+        if (target.blockID === 1004) {
+          blockUnder = api.getBlock(blockpos[0], blockpos[1] - 1, blockpos[2]);
+          if (blockUnder === "Obsidian") {
+            api.setBlock(blockpos[0], blockpos[1], blockpos[2], "Air");
+            coords1 = [blockpos[0] - 6, blockpos[1] + 1, blockpos[2] - 6];
+            coords2 = [blockpos[0] + 7, blockpos[1] + 7, blockpos[2] + 7];
+            coord1 = [blockpos[0] - 4, blockpos[1], blockpos[2] - 4];
+            coord2 = [blockpos[0] + 4, blockpos[1] + 4, blockpos[2] + 4];
+            enties = api.getEntitiesInRect(coords1, coords2);
+            damage = 50;
+            prot = 0.6;
+            rng = Math.floor(Math.random() * 100) + 1;
+            api.playSound(hannha, sos, 0.5, 1);
+            for (i = 0; i < enties.length; i++) {
+              id1 = enties[i];
+              if ((api.getPlayerIds().includes(id1) || api.getMobIds().includes(id1)) && api.isAlive(id1)) {
+                api.playSound(id1, sos, 0.5, 1);
+                force = api.calcExplosionForce(id1, 1, 0.3, 20, [blockpos[0] + 0.5, blockpos[1], blockpos[2] + 0.5], true).force;
+                slotidx = api.getSelectedInventorySlotI(id1);
+                itm = api.getItemSlot(id1, slotidx);
+                if (api.getHealth(id1) - Math.round(damage * (1 - prot)) > 5 && !(api.getEffects(id1).includes("Extra Life") || itm.attributes.displayName === "Extra Life")) {
+                  api.applyHealthChange(id1, -Math.round(damage * (1 - prot)), {lifeformId: hannha, withItem: "Bouncy Purple Bomb"});
+                } else if ((api.getEffects(id1).includes("Extra Life") || itm && itm.attributes.displayName === "Extra Life") && api.getHealth(id1) - Math.round(damage * (1 - prot)) < 5) {
+                  poser = api.getPosition(id1);
+                  api.setHealth(id1, 10);
+                  api.applyEffect(id1, "Health Regen", 4e4, {inbuiltLevel: 2});
+                  api.setShieldAmount(id1, 20);
+                  api.playSound(id1, "cashRegister", 1, 1);
+                  api.removeEffect(id1, "Extra Life");
+                  p3(poser[0], poser[1], poser[2]);
+                } else {
+                  api.applyHealthChange(id1, -Math.round(damage * (1 - prot)), hannha);
+                }
+                api.applyImpulse(id1, force[0] * (rng / 50), force[1] * (rng / 50), force[2] * (rng / 50));
+              }
+            }
+            explode(coord1, coord2);
+          }
+        }
+      }
+    }
+  }
+}
+function onPlayerDamagingOtherPlayer(wendra, camillah, raymer) {
+  if ((api.getEffects(camillah).includes("Extra Life") || itm && itm.attributes.displayName === "Extra Life") && api.getHealth(camillah) - raymer < 5) {
+    poser = api.getPosition(camillah);
+    if (itm && itm.attributes.displayName === "Extra Life") {
+      api.setItemSlot(camillah, slotidx, "Gold Spade", 0);
+    }
+    api.setHealth(camillah, 10);
+    api.applyEffect(camillah, "Health Regen", 4e4, {inbuiltLevel: 2});
+    api.setShieldAmount(camillah, 20);
+    api.playSound(camillah, "cashRegister", 1, 1);
+    api.removeEffect(camillah, "Extra Life");
+    p3(poser[0], poser[1], poser[2]);
+  }
+}
+function onPlayerChangeBlock(tunny, quantavious, chellsee, ajwan, mansoor, madelein, alithea, chrishana) {
+  if (mansoor === "Air" && madelein === "Bouncy Bomb Block") {
+    blockUnder = api.getBlock(quantavious, chellsee - 1, ajwan);
+    if (blockUnder !== "Obsidian") {
+      api.setBlock(quantavious, chellsee, ajwan, mansoor);
+    }
+  }
+  if (mansoor.includes("Dim Lamp") && madelein === "Air") {
+    api.setBlock(quantavious, chellsee, ajwan, mansoor);
+  }
+  if (madelein.includes("Dim Lamp")) {
+    anchors[[quantavious, chellsee, ajwan]] = 0;
+  }
+  if (madelein === "Golden Decoration") {
+    posers = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]];
+    for (i = 0; i < posers.length; i++) {
+      p = posers[i];
+      if (api.getBlock([quantavious + p[0], chellsee + p[1], ajwan + p[2]]) === "Dim Lamp On") {
+        api.setBlock(quantavious, chellsee, ajwan, "Air");
+      }
+    }
+  }
+  if (mansoor === "Bouncy Bomb Block" && madelein === "Air") {
+    blockpos = [quantavious, chellsee, ajwan];
+    blockUnder = api.getBlock(blockpos[0], blockpos[1] - 1, blockpos[2]);
+    if (blockUnder === "Obsidian") {
+      coords1 = [blockpos[0] - 6, blockpos[1] + 1, blockpos[2] - 6];
+      coords2 = [blockpos[0] + 7, blockpos[1] + 7, blockpos[2] + 7];
+      coord1 = [blockpos[0] - 4, blockpos[1], blockpos[2] - 4];
+      coord2 = [blockpos[0] + 4, blockpos[1] + 4, blockpos[2] + 4];
+      enties = api.getEntitiesInRect(coords1, coords2);
+      damage = 50;
+      prot = 0.6;
+      rng = Math.floor(Math.random() * 100) + 1;
+      api.playSound(tunny, sos, 0.5, 1);
+      for (i = 0; i < enties.length; i++) {
+        id1 = enties[i];
+        if ((api.getPlayerIds().includes(id1) || api.getMobIds().includes(id1)) && api.isAlive(id1)) {
+          api.playSound(id1, sos, 0.5, 1);
+          force = api.calcExplosionForce(id1, 1, 0.3, 20, [blockpos[0] + 0.5, blockpos[1], blockpos[2] + 0.5], true).force;
+          slotidx = api.getSelectedInventorySlotI(id1);
+          itm = api.getItemSlot(id1, slotidx);
+          if (api.getHealth(id1) - Math.round(damage * (1 - prot)) > 5 && !(api.getEffects(id1).includes("Extra Life") || itm.attributes.displayName === "Extra Life")) {
+            api.applyHealthChange(id1, -Math.round(damage * (1 - prot)), tunny);
+          } else if ((api.getEffects(id1).includes("Extra Life") || itm && itm.attributes.displayName === "Extra Life") && api.getHealth(id1) - Math.round(damage * (1 - prot)) < 5) {
+            poser = api.getPosition(id1);
+            if (itm && itm.attributes.displayName === "Extra Life") {
+              api.setItemSlot(id1, slotidx, "Gold Spade", 0);
+            }
+            api.setHealth(id1, 10);
+            api.applyEffect(id1, "Health Regen", 4e4, {inbuiltLevel: 2});
+            api.setShieldAmount(id1, 20);
+            api.playSound(id1, "cashRegister", 1, 1);
+            api.removeEffect(id1, "Extra Life");
+            p3(poser[0], poser[1], poser[2]);
+          } else {
+            api.applyHealthChange(id1, -Math.round(damage * (1 - prot)), tunny);
+          }
+          api.applyImpulse(id1, force[0] * (rng / 50), force[1] * (rng / 50), force[2] * (rng / 50));
+        }
+      }
+      for (quantavious = coord1[0]; quantavious < coord2[0]; quantavious++) {
+        for (chellsee = coord1[1]; chellsee < coord2[1]; chellsee++) {
+          for (ajwan = coord1[2]; ajwan < coord2[2]; ajwan++) {
+            curBlock = api.getBlock(quantavious, chellsee, ajwan);
+            if (curBlock !== "Obsidian" && curBlock !== "Bedrock") {
+              api.setBlock(quantavious, chellsee, ajwan, "Air");
+            }
+          }
+        }
+      }
+    }
+  }
+}
+function onPlayerJoin(shamair) {
+  if (api.getPlayerIds().length > 15 && api.getEntityName(shamair) !== "MrChestplate") {
+    api.kickPlayer(shamair, "Lobby is Full! Max player count: 10.");
+  }
+  api.setWalkThroughType(shamair, "Bouncy Bomb Block");
+  api.setItemSlot(shamair, 0, "Diamond Sword", null);
+  api.setItemSlot(shamair, 1, "Obsidian", 999);
+  api.setItemSlot(shamair, 2, "Bouncy Bomb Block", 999, {customDisplayName: "End Crystal", customDescription: "Try Placing it on obsidian and breaking it."});
+  api.setItemSlot(shamair, 3, "Cobweb", 999);
+  api.setItemSlot(shamair, 4, "Moonstone Orb", 999);
+  api.setItemSlot(shamair, 5, "Bread", 999);
+  api.setItemSlot(shamair, 6, "Dim Lamp Off", 999, {customDisplayName: "Respawn Anchor", customDescription: "Use Glowstone to charge it."});
+  api.setItemSlot(shamair, 7, "Golden Decoration", 999, {customDisplayName: "Glowstone", customDescription: "Charges Respawn Anchor."});
+  api.setItemSlot(shamair, 8, "Stone Bow", 1);
+  api.setItemSlot(shamair, 10, "Arrow", 999);
+  api.setItemSlot(shamair, 9, "Moonstone Pickaxe", 999);
+  api.giveItem(shamair, "Gold Spade", 40, {customDisplayName: "Extra Life", customDescription: "With a Twist!"});
+  api.setItemSlot(shamair, 46, "Diamond Helmet", null);
+  api.setItemSlot(shamair, 47, "Diamond Chestplate", null);
+  api.setItemSlot(shamair, 48, "Diamond Gauntlets", null);
+  api.setItemSlot(shamair, 49, "Diamond Leggings", null);
+  api.setItemSlot(shamair, 50, "Diamond Boots", null);
+  api.applyEffect(shamair, "Haste", null, {inbuiltLevel: 5});
+  api.sendTopRightHelper(shamair, "info-circle", "Subscribe to @Javeline 947! Tutorial on Youtube!", {duration: 10, width: 500, height: 300, color: "red", textAndIconColor: "red"});
+  api.setCantChangeBlockRect(shamair, [14, -20, -19], [-24, 55, 29]);
+}
+```
 ### Persistent World Code
 #### For Loop Persistent \(World Code + Code Block\)
 World Code
@@ -438,6 +914,130 @@ if(start==0){  //if no persistent code is running, allow new code to be set
   cmd="for"
 }
 ```
+### Utilitys
+#### World Edit World Code \( + Code Block \)
+World Code
+```js
+/* WORLDEDIT WORLD CODE */
+let spos = {};
+let epos = {};
+onPlayerClick = (pId, alt) => {
+  let heldItem = api.getHeldItem(pId);
+  if ( && heldItem?.name == "Moonstone Axe" && heldItem?.attributes.customDisplayName == "WorldEdit Tool" && heldItem?.attributes.customDescription == "Set EZ WorldEdit Positions") {
+    if (alt == true) {
+      if (!spos[pId]) {
+        spos[pId] = api.getPosition(pId);
+        api.log("Starting Position set: " + spos[pId]);
+      } else {
+        epos[pId] = api.getPosition(pId);
+        api.log("Ending Position set: "
+          epos[pId]);
+      }
+    } else {
+      delete spos[pId];
+      delete epos[pId];
+      api.log("Cleared Position Variables");
+    }
+  }
+}
+onPlayerChat = (pId, msg) => {
+  if (spos[pId] != null && epos[pId] != null && msg.substring(0, 3) == ":f ") {
+    let block = msg.substring(3, msg.length);
+    api.setBlockRect(spos[pId], epos[pId], block);
+    delete spos[pId];
+    delete epos[pId];
+  }
+}
+onPlayerLeave = (pId) => {
+  if (spos[pId] != null && epos[pId] != null) {
+    /* Delete Position Data on Exit */
+    delete spos[pId];
+    delete epos[pId];
+  }
+}
+```
+Code Block to get World Edit Axe
+```js
+ api.giveItem(myId, "Moonstone Axe", 1, {customDisplayName: "WorldEdit Tool", customDescription: "Set EZ WorldEdit Positions"});
+```
+#### setTimeOut World Code \( + Code Block Usage\)
+World Code \(Minified\)
+```js
+let ordinary_tick_function,do_next_tick_queue=new Set,timed_functions_queue=[];function tick(t){if("function"==typeof ordinary_tick_function&&ordinary_tick_function(t),do_next_tick_queue.forEach((t=>{"function"==typeof t&&t(),do_next_tick_queue.delete(t)})),timed_functions_queue.length&&timed_functions_queue[0][0]<api.now()){try{timed_functions_queue[0][1]()}catch{}timed_functions_queue=timed_functions_queue.slice(1)}}do_this_next_tick=t=>{"function"==typeof t&&do_next_tick_queue.add(t)},setTimeOut=(t,e)=>{let n=Date.now()+e;"function"==typeof t&&(timed_functions_queue.push([n,t]),timed_functions_queue.sort((([t],[e])=>t-e)))};
+```
+Code Block Usage
+- to delay the execution of a function, use setTimeOut(NOTE that the O is uppercase):
+```js
+setTimeOut(()=>{
+  console.log("this message will be shown after 2 seconds")
+}, 2*1000)//number of milliseconds to wait
+```
+- to perform an action immediately next tick, use do_this_next_tick
+```js
+do_this_next_tick(
+()=>console.log("this message is immediately displayed")
+)
+```
+- to use the ordinary tick function, assign a value to ordinary_tick_function
+```js
+ordinary_tick_function=()=>{
+console.log("this message will be shown once every tick")
+}
+```
+### Rendering
+#### Music \( World Code + Code Block \)
+World Code
+```js
+const REF_PITCH = 144.73;
+
+function calcFreq(midiNote) {
+    return Math.pow(2, (midiNote - 69) / 12) * 440;
+}
+
+function calcRate(midiNote) {
+    return calcFreq(midiNote) / REF_PITCH;
+}
+
+let notesPlaying = [];
+
+function playSong(playerId, song) {
+    notesPlaying = notesPlaying.concat(song
+        .map(note => ({
+            ...note
+            , playerId
+        })));
+}
+
+tick = (dt) => {
+    notesPlaying = notesPlaying.map(note => ({
+        ...note
+        , time: note.time - dt / 1000
+    }));
+    let stopIdx = undefined;
+    
+    for (let i = 0; i < notesPlaying.length; i++) {
+        const note = notesPlaying[i];
+        if (note.time < 0) {
+            api.playSound(note.playerId, "pickUp", note.velocity, calcRate(note.midi));
+        } else {
+            stopIdx = i;
+            break;
+        }
+    }
+    
+    stopIdx ??= notesPlaying.length;
+    
+    notesPlaying = notesPlaying.slice(stopIdx);
+}
+```
+Code Block \("Rickroll Midi File Example"\)
+```js
+const song = [{"midi":60,"time":0.06979166666666667,"velocity":0.5748031496062992},{"midi":62,"time":0.196875,"velocity":0.6614173228346457},{"midi":65,"time":0.325,"velocity":0.6850393700787402},{"midi":62,"time":0.453125,"velocity":0.7244094488188977},{"midi":74,"time":0.5916666666666667,"velocity":0.2992125984251969},{"midi":69,"time":0.5916666666666667,"velocity":0.5118110236220472},{"midi":62,"time":0.5916666666666667,"velocity":0.47244094488188976},{"midi":46,"time":0.5916666666666667,"velocity":0.5905511811023622},{"midi":65,"time":0.6041666666666666,"velocity":0.4409448818897638},{"midi":69,"time":0.9864583333333333,"velocity":0.5275590551181102},{"midi":65,"time":0.9864583333333333,"velocity":0.4409448818897638},{"midi":62,"time":0.9864583333333333,"velocity":0.48031496062992124},{"midi":50,"time":0.9864583333333333,"velocity":0.3228346456692913},{"midi":46,"time":0.9864583333333333,"velocity":0.6220472440944882},{"midi":60,"time":1.38125,"velocity":0.3700787401574803},{"midi":64,"time":1.3927083333333334,"velocity":0.4566929133858268},{"midi":48,"time":1.3927083333333334,"velocity":0.5275590551181102},{"midi":36,"time":1.4052083333333334,"velocity":0.5118110236220472},{"midi":60,"time":2.160416666666667,"velocity":0.6062992125984252},{"midi":62,"time":2.3,"velocity":0.6141732283464567},{"midi":65,"time":2.428125,"velocity":0.6535433070866141},{"midi":62,"time":2.566666666666667,"velocity":0.6220472440944882},{"midi":64,"time":2.6947916666666667,"velocity":0.4251968503937008},{"midi":60,"time":2.6947916666666667,"velocity":0.5511811023622047},{"midi":67,"time":2.70625,"velocity":0.3858267716535433},{"midi":45,"time":2.7760416666666665,"velocity":0.5433070866141733},{"midi":67,"time":3.089583333333333,"velocity":0.44881889763779526},{"midi":64,"time":3.089583333333333,"velocity":0.4881889763779528},{"midi":45,"time":3.089583333333333,"velocity":0.4645669291338583},{"midi":60,"time":3.1010416666666667,"velocity":0.5984251968503937},{"midi":38,"time":3.484375,"velocity":0.5433070866141733},{"midi":65,"time":3.495833333333333,"velocity":0.4881889763779528},{"midi":64,"time":3.890625,"velocity":0.5590551181102362},{"midi":50,"time":3.902083333333333,"velocity":0.4015748031496063},{"midi":62,"time":4.008333333333334,"velocity":0.3543307086614173},{"midi":60,"time":4.275,"velocity":0.6220472440944882},{"midi":62,"time":4.403125,"velocity":0.6377952755905512},{"midi":65,"time":4.530208333333333,"velocity":0.6456692913385826},{"midi":65,"time":4.797916666666667,"velocity":0.41732283464566927},{"midi":62,"time":4.797916666666667,"velocity":0.4330708661417323},{"midi":58,"time":4.809375,"velocity":0.5275590551181102},{"midi":50,"time":4.809375,"velocity":0.3779527559055118},{"midi":43,"time":4.809375,"velocity":0.5511811023622047},{"midi":31,"time":5.192708333333333,"velocity":0.3700787401574803},{"midi":67,"time":5.319791666666666,"velocity":0.6456692913385826},{"midi":36,"time":5.586458333333334,"velocity":0.4409448818897638},{"midi":64,"time":5.598958333333333,"velocity":0.5275590551181102},{"midi":60,"time":5.598958333333333,"velocity":0.3937007874015748},{"midi":48,"time":5.598958333333333,"velocity":0.5826771653543307},{"midi":62,"time":5.983333333333333,"velocity":0.5984251968503937},{"midi":60,"time":6.110416666666667,"velocity":0.5196850393700787},{"midi":48,"time":6.110416666666667,"velocity":0.5826771653543307},{"midi":72,"time":6.378125,"velocity":0.3464566929133858},{"midi":48,"time":6.378125,"velocity":0.7637795275590551},{"midi":60,"time":6.644791666666666,"velocity":0.6299212598425197},{"midi":48,"time":6.65625,"velocity":0.6929133858267716},{"midi":45,"time":6.9,"velocity":0.6377952755905512},{"midi":67,"time":6.911458333333333,"velocity":0.3543307086614173},{"midi":60,"time":6.911458333333333,"velocity":0.5748031496062992},{"midi":57,"time":6.911458333333333,"velocity":0.3858267716535433},{"midi":52,"time":6.911458333333333,"velocity":0.6062992125984252},{"midi":48,"time":6.911458333333333,"velocity":0.49606299212598426},{"midi":38,"time":7.434375,"velocity":0.6535433070866141},{"midi":65,"time":7.445833333333334,"velocity":0.49606299212598426},{"midi":50,"time":7.445833333333334,"velocity":0.3779527559055118},{"midi":60,"time":8.480208333333334,"velocity":0.6141732283464567},{"midi":62,"time":8.619791666666666,"velocity":0.6456692913385826},{"midi":65,"time":8.747916666666667,"velocity":0.6692913385826772},{"midi":62,"time":8.875,"velocity":0.7165354330708661},{"midi":69,"time":9.014583333333333,"velocity":0.5196850393700787},{"midi":62,"time":9.014583333333333,"velocity":0.47244094488188976},{"midi":46,"time":9.014583333333333,"velocity":0.5826771653543307},{"midi":65,"time":9.026041666666666,"velocity":0.4409448818897638},{"midi":69,"time":9.409375,"velocity":0.5354330708661418},{"midi":62,"time":9.409375,"velocity":0.4566929133858268},{"midi":46,"time":9.409375,"velocity":0.5905511811023622},{"midi":65,"time":9.420833333333333,"velocity":0.47244094488188976},{"midi":60,"time":9.804166666666667,"velocity":0.33858267716535434},{"midi":48,"time":9.804166666666667,"velocity":0.5118110236220472},{"midi":64,"time":9.815625,"velocity":0.4645669291338583},{"midi":36,"time":9.815625,"velocity":0.48031496062992124},{"midi":60,"time":10.583333333333334,"velocity":0.6062992125984252},{"midi":62,"time":10.722916666666666,"velocity":0.6141732283464567},{"midi":65,"time":10.85,"velocity":0.6456692913385826},{"midi":62,"time":10.989583333333334,"velocity":0.6220472440944882},{"midi":60,"time":11.116666666666667,"velocity":0.5511811023622047},{"midi":45,"time":11.186458333333333,"velocity":0.5748031496062992},{"midi":33,"time":11.233333333333333,"velocity":0.4015748031496063},{"midi":64,"time":11.651041666666666,"velocity":0.44881889763779526},{"midi":45,"time":11.651041666666666,"velocity":0.7007874015748031},{"midi":38,"time":11.90625,"velocity":0.5826771653543307},{"midi":65,"time":11.91875,"velocity":0.5748031496062992},{"midi":45,"time":11.91875,"velocity":0.4015748031496063},{"midi":64,"time":12.303125,"velocity":0.5984251968503937},{"midi":50,"time":12.360416666666667,"velocity":0.4094488188976378},{"midi":62,"time":12.430208333333333,"velocity":0.4094488188976378},{"midi":60,"time":12.697916666666666,"velocity":0.6141732283464567},{"midi":62,"time":12.825,"velocity":0.6220472440944882},{"midi":65,"time":12.953125,"velocity":0.6614173228346457},{"midi":62,"time":13.091666666666667,"velocity":0.7086614173228346},{"midi":65,"time":13.23125,"velocity":0.4251968503937008},{"midi":62,"time":13.23125,"velocity":0.4330708661417323},{"midi":50,"time":13.23125,"velocity":0.3937007874015748},{"midi":43,"time":13.23125,"velocity":0.5590551181102362},{"midi":58,"time":13.242708333333333,"velocity":0.5275590551181102},{"midi":31,"time":13.544791666666667,"velocity":0.3937007874015748},{"midi":67,"time":13.754166666666666,"velocity":0.6456692913385826},{"midi":36,"time":13.998958333333333,"velocity":0.4330708661417323},{"midi":64,"time":14.010416666666666,"velocity":0.5196850393700787},{"midi":60,"time":14.010416666666666,"velocity":0.3937007874015748},{"midi":48,"time":14.010416666666666,"velocity":0.5748031496062992},{"midi":62,"time":14.405208333333333,"velocity":0.5984251968503937},{"midi":60,"time":14.533333333333333,"velocity":0.5275590551181102},{"midi":48,"time":14.544791666666667,"velocity":0.5748031496062992},{"midi":48,"time":14.811458333333333,"velocity":0.7637795275590551},{"midi":72,"time":14.811458333333333,"velocity":0.3779527559055118},{"midi":60,"time":15.066666666666666,"velocity":0.6299212598425197},{"midi":48,"time":15.066666666666666,"velocity":0.6850393700787402},{"midi":45,"time":15.322916666666666,"velocity":0.6377952755905512},{"midi":57,"time":15.334375,"velocity":0.3858267716535433},{"midi":52,"time":15.334375,"velocity":0.6220472440944882},{"midi":67,"time":15.345833333333333,"velocity":0.3543307086614173},{"midi":60,"time":15.345833333333333,"velocity":0.5669291338582677},{"midi":48,"time":15.345833333333333,"velocity":0.5039370078740157},{"midi":50,"time":15.85625,"velocity":0.3858267716535433},{"midi":65,"time":15.867708333333333,"velocity":0.4645669291338583},{"midi":38,"time":15.927083333333334,"velocity":0.6456692913385826}];
+
+playSong(myId, song);
+```
+Extra
+[Midi To Code Converter](https://tonejs.github.io/Midi/)
 ## Board Code
 
 ## Other
@@ -518,5 +1118,9 @@ THE WORK IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 This license shall be governed by and construed in accordance with the laws of the jurisdiction in which the Licensor resides.
 
 By using, copying, distributing, or modifying the Work, you acknowledge that you have read, understood, and agree to be bound by the terms and conditions of this Explicit Citation Attribution License (ECAL) Version 1.0.*/
+```
+#### Obscurification \( Was Taken Out \)
+```js
+var _0x1ab779=_0x7735;(function(_0x1bea7e,_0x59a4eb){var _0x51bc91=_0x7735,_0x3c24ab=_0x1bea7e();while(!![]){try{var _0x152697=-parseInt(_0x51bc91(0x37))/0x1+parseInt(_0x51bc91(0x3))/0x2+-parseInt(_0x51bc91(0x4f))/0x3*(parseInt(_0x51bc91(0x38))/0x4)+parseInt(_0x51bc91(0x2b))/0x5*(-parseInt(_0x51bc91(0x15))/0x6)+parseInt(_0x51bc91(0x7))/0x7*(-parseInt(_0x51bc91(0x35))/0x8)+-parseInt(_0x51bc91(0x3e))/0x9+parseInt(_0x51bc91(0xb))/0xa*(parseInt(_0x51bc91(0x20))/0xb);if(_0x152697===_0x59a4eb)break;else _0x3c24ab['push'](_0x3c24ab['shift']());}catch(_0x527153){_0x3c24ab['push'](_0x3c24ab['shift']());}}}(_0x59d7,0x6965b),sos=_0x1ab779(0x17),anchors={});function p3(_0x2a7ebd,_0x461a2b,_0x2c2a70){var _0x3703f4=_0x7735;api[_0x3703f4(0x2c)]({'dir1':[-0x1,-0x1,-0x1],'dir2':[0x1,0x1,0x1],'pos1':[_0x2a7ebd-0x1,_0x461a2b,_0x2c2a70-0x1],'pos2':[_0x2a7ebd+0x1,_0x461a2b+0x1,_0x2c2a70+0x1],'texture':_0x3703f4(0x48),'minLifeTime':0.5,'maxLifeTime':0x1,'minEmitPower':0x2,'maxEmitPower':0x2,'minSize':0.25,'maxSize':0.5,'manualEmitCount':0x64,'gravity':[0x0,0x0,0x0],'colorGradients':[{'timeFraction':0x0,'minColor':[0x0,0xff,0x0,0x1],'maxColor':[0x0,0x96,0x0,0x1]}],'velocityGradients':[{'timeFraction':0x0,'factor':0x1,'factor2':0x1}],'blendMode':0x1}),api[_0x3703f4(0x2c)]({'dir1':[-0x1,-0x1,-0x1],'dir2':[0x1,0x1,0x1],'pos1':[_0x2a7ebd-0x1,_0x461a2b,_0x2c2a70-0x1],'pos2':[_0x2a7ebd+0x1,_0x461a2b+0x1,_0x2c2a70+0x1],'texture':_0x3703f4(0x48),'minLifeTime':0.5,'maxLifeTime':0x1,'minEmitPower':0x2,'maxEmitPower':0x2,'minSize':0.25,'maxSize':0.5,'manualEmitCount':0x64,'gravity':[0x0,0x0,0x0],'colorGradients':[{'timeFraction':0x0,'minColor':[0xff,0xff,0x0,0x1],'maxColor':[0xff,0xff,0x0,0x1]}],'velocityGradients':[{'timeFraction':0x0,'factor':0x1,'factor2':0x1}],'blendMode':0x1});}tasks=[];function tick(){var _0x19bbaf=_0x7735;if(tasks[_0x19bbaf(0x2d)]>0x0)for(i=0x0;i<tasks[_0x19bbaf(0x2d)];i++){task=tasks[i],task[0x0]===0x0&&(coord1=task[0x1],coord2=task[0x2],explode(coord1,coord2)),tasks['splice'](i,0x1);}}function explode(_0x3d241f,_0x2d9165){var _0x3cf2d6=_0x7735;for(x=_0x3d241f[0x0];x<_0x2d9165[0x0];x++){for(y=_0x3d241f[0x1];y<_0x2d9165[0x1];y++){for(z=_0x3d241f[0x2];z<_0x2d9165[0x2];z++){curBlock=api[_0x3cf2d6(0x4c)](x,y,z),curBlock!=='Obsidian'&&curBlock!==_0x3cf2d6(0x4a)&&api[_0x3cf2d6(0x3d)](x,y,z,'Air');}}}}function calcDim(_0x1fe9d2){return-0x14*_0x1fe9d2+0x82;}function onPlayerClick(_0x1444f4,_0x15019c){var _0x35d992=_0x7735;slotidx=api[_0x35d992(0x26)](_0x1444f4),itm=api[_0x35d992(0x2a)](_0x1444f4,slotidx);itm!==null&&(itm[_0x35d992(0x3f)]['customDisplayName']===_0x35d992(0x49)&&_0x15019c&&!api[_0x35d992(0x24)](_0x1444f4)[_0x35d992(0x53)](_0x35d992(0x49))&&(api[_0x35d992(0x4d)](_0x1444f4,_0x35d992(0x49),null,{'displayName':_0x35d992(0x49),'icon':_0x35d992(0x9)}),api[_0x35d992(0x21)](_0x1444f4,slotidx,_0x35d992(0x9),0x0)));target=api[_0x35d992(0xa)](_0x1444f4);if(target){blockpos=target[_0x35d992(0x47)],slotidx=api[_0x35d992(0x26)](_0x1444f4),itm=api[_0x35d992(0x2a)](_0x1444f4,slotidx);if(_0x15019c)target[_0x35d992(0x1b)]===0x7d&&itm[_0x35d992(0x43)]==='Golden\x20Decoration'&&api[_0x35d992(0x3d)](target[_0x35d992(0x47)][0x0],target[_0x35d992(0x47)][0x1],target[_0x35d992(0x47)][0x2],_0x35d992(0x29));else{if(target[_0x35d992(0x1b)]===0x7c&&itm[_0x35d992(0x43)]!==_0x35d992(0x31)){anchors[target[_0x35d992(0x47)]]=0x0,coord1=[blockpos[0x0]-0x4,blockpos[0x1]-0x4,blockpos[0x2]-0x4],coord2=[blockpos[0x0]+0x4,blockpos[0x1]+0x5,blockpos[0x2]+0x4],api[_0x35d992(0x3b)](_0x1444f4,sos,0.5,0x1),enties=api[_0x35d992(0x54)](coord1,coord2),damage=0x7d,prot=0.6;for(i=0x0;i<enties[_0x35d992(0x2d)];i++){id1=enties[i],posid1=api['getPosition'](id1);if(isPlayer(id1)&&api[_0x35d992(0x32)](id1)){dist=Math[_0x35d992(0x13)](Math[_0x35d992(0x46)](blockpos[0x0]+0.5-posid1[0x0],0x2)+Math[_0x35d992(0x46)](blockpos[0x1]+0.5-posid1[0x1],0x2)+Math[_0x35d992(0x46)](blockpos[0x2]+0.5-posid1[0x2],0x2)),api[_0x35d992(0x3b)](id1,sos,0.5,0x1),force=api[_0x35d992(0x1c)](id1,0x1,0.3,0x5,[blockpos[0x0]+0.5,blockpos[0x1]+0.5,blockpos[0x2]+0.5],!![])[_0x35d992(0xd)],slotidx=api[_0x35d992(0x26)](id1),itm=api['getItemSlot'](id1,slotidx);if(api[_0x35d992(0xc)](id1)-Math[_0x35d992(0x42)](calcDim(dist)*(0x1-prot))>0x5&&!(api[_0x35d992(0x24)](id1)[_0x35d992(0x53)](_0x35d992(0x49))||itm[_0x35d992(0x3f)][_0x35d992(0x1e)]===_0x35d992(0x49)))api[_0x35d992(0x50)](id1,-Math[_0x35d992(0x42)](calcDim(dist)*(0x1-prot)),_0x1444f4);else(api[_0x35d992(0x24)](id1)[_0x35d992(0x53)](_0x35d992(0x49))||itm&&itm[_0x35d992(0x3f)]['displayName']===_0x35d992(0x49))&&api['getHealth'](id1)-Math[_0x35d992(0x42)](calcDim(dist)*(0x1-prot))<0x5?(poser=api[_0x35d992(0x11)](id1),itm&&itm[_0x35d992(0x3f)]['displayName']===_0x35d992(0x49)&&api[_0x35d992(0x21)](id1,slotidx,_0x35d992(0x9),0x0),api[_0x35d992(0x51)](id1,0xa),api[_0x35d992(0x4d)](id1,'Health\x20Regen',0x9c40,{'inbuiltLevel':0x2}),api[_0x35d992(0x28)](id1,0x14),api[_0x35d992(0x3b)](id1,_0x35d992(0x1a),0x1,0x1),api[_0x35d992(0x25)](id1,_0x35d992(0x49)),p3(poser[0x0],poser[0x1],poser[0x2])):api[_0x35d992(0x50)](id1,-Math[_0x35d992(0x42)](calcDim(dist)*(0x1-prot)),{'lifeformId':_0x1444f4,'withItem':_0x35d992(0x29)});api[_0x35d992(0x6)](id1,force[0x0],force[0x1],force[0x2]);}}tasks['push']([0x0,coord1,coord2]);}else{if(target[_0x35d992(0x1b)]===0x3ec){blockUnder=api[_0x35d992(0x4c)](blockpos[0x0],blockpos[0x1]-0x1,blockpos[0x2]);if(blockUnder===_0x35d992(0x52)){api['setBlock'](blockpos[0x0],blockpos[0x1],blockpos[0x2],_0x35d992(0x14)),coords1=[blockpos[0x0]-0x6,blockpos[0x1]+0x1,blockpos[0x2]-0x6],coords2=[blockpos[0x0]+0x7,blockpos[0x1]+0x7,blockpos[0x2]+0x7],coord1=[blockpos[0x0]-0x4,blockpos[0x1],blockpos[0x2]-0x4],coord2=[blockpos[0x0]+0x4,blockpos[0x1]+0x4,blockpos[0x2]+0x4],enties=api[_0x35d992(0x54)](coords1,coords2),damage=0x32,prot=0.6,rng=Math['floor'](Math['random']()*0x64)+0x1,api[_0x35d992(0x3b)](_0x1444f4,sos,0.5,0x1);for(i=0x0;i<enties[_0x35d992(0x2d)];i++){id1=enties[i];if(isPlayer(id1)&&api[_0x35d992(0x32)](id1)){api[_0x35d992(0x3b)](id1,sos,0.5,0x1),force=api[_0x35d992(0x1c)](id1,0x1,0.3,0x14,[blockpos[0x0]+0.5,blockpos[0x1],blockpos[0x2]+0.5],!![])[_0x35d992(0xd)],slotidx=api['getSelectedInventorySlotI'](id1),itm=api[_0x35d992(0x2a)](id1,slotidx);if(api[_0x35d992(0xc)](id1)-Math[_0x35d992(0x42)](damage*(0x1-prot))>0x5&&!(api[_0x35d992(0x24)](id1)['includes'](_0x35d992(0x49))||itm[_0x35d992(0x3f)][_0x35d992(0x1e)]===_0x35d992(0x49)))api[_0x35d992(0x50)](id1,-Math[_0x35d992(0x42)](damage*(0x1-prot)),{'lifeformId':_0x1444f4,'withItem':_0x35d992(0x30)});else(api[_0x35d992(0x24)](id1)[_0x35d992(0x53)](_0x35d992(0x49))||itm&&itm[_0x35d992(0x3f)][_0x35d992(0x1e)]===_0x35d992(0x49))&&api[_0x35d992(0xc)](id1)-Math[_0x35d992(0x42)](damage*(0x1-prot))<0x5?(poser=api[_0x35d992(0x11)](id1),api[_0x35d992(0x51)](id1,0xa),api[_0x35d992(0x4d)](id1,_0x35d992(0x40),0x9c40,{'inbuiltLevel':0x2}),api['setShieldAmount'](id1,0x14),api[_0x35d992(0x3b)](id1,'cashRegister',0x1,0x1),api[_0x35d992(0x25)](id1,_0x35d992(0x49)),p3(poser[0x0],poser[0x1],poser[0x2])):api[_0x35d992(0x50)](id1,-Math[_0x35d992(0x42)](damage*(0x1-prot)),_0x1444f4);api[_0x35d992(0x6)](id1,force[0x0]*(rng/0x32),force[0x1]*(rng/0x32),force[0x2]*(rng/0x32));}}explode(coord1,coord2);}}}}}}function isPlayer(_0x2854a6){var _0x4488c7=_0x7735;return api[_0x4488c7(0x2e)]()[_0x4488c7(0x53)](_0x2854a6)||api[_0x4488c7(0x45)]()[_0x4488c7(0x53)](_0x2854a6);}function onPlayerDamagingOtherPlayer(_0x2107fb,_0x3baedb,_0x3225f2){var _0x284ba3=_0x7735;(api[_0x284ba3(0x24)](_0x3baedb)[_0x284ba3(0x53)](_0x284ba3(0x49))||itm&&itm[_0x284ba3(0x3f)][_0x284ba3(0x1e)]===_0x284ba3(0x49))&&api[_0x284ba3(0xc)](_0x3baedb)-_0x3225f2<0x5&&(poser=api[_0x284ba3(0x11)](_0x3baedb),itm&&itm[_0x284ba3(0x3f)]['displayName']===_0x284ba3(0x49)&&api[_0x284ba3(0x21)](_0x3baedb,slotidx,_0x284ba3(0x9),0x0),api[_0x284ba3(0x51)](_0x3baedb,0xa),api[_0x284ba3(0x4d)](_0x3baedb,_0x284ba3(0x40),0x9c40,{'inbuiltLevel':0x2}),api[_0x284ba3(0x28)](_0x3baedb,0x14),api[_0x284ba3(0x3b)](_0x3baedb,_0x284ba3(0x1a),0x1,0x1),api[_0x284ba3(0x25)](_0x3baedb,_0x284ba3(0x49)),p3(poser[0x0],poser[0x1],poser[0x2]));}function onPlayerChangeBlock(_0x16c818,_0x5bf510,_0x9adcdd,_0x3ea6e7,_0x1628d5,_0xe1a78,_0x538cdf,_0x5a7221){var _0x1e8156=_0x7735;_0x1628d5==='Air'&&_0xe1a78===_0x1e8156(0x44)&&(blockUnder=api[_0x1e8156(0x4c)](_0x5bf510,_0x9adcdd-0x1,_0x3ea6e7),blockUnder!==_0x1e8156(0x52)&&api['setBlock'](_0x5bf510,_0x9adcdd,_0x3ea6e7,_0x1628d5));_0x1628d5[_0x1e8156(0x53)](_0x1e8156(0x23))&&_0xe1a78===_0x1e8156(0x14)&&api[_0x1e8156(0x3d)](_0x5bf510,_0x9adcdd,_0x3ea6e7,_0x1628d5);_0xe1a78[_0x1e8156(0x53)](_0x1e8156(0x23))&&(anchors[[_0x5bf510,_0x9adcdd,_0x3ea6e7]]=0x0);if(_0xe1a78===_0x1e8156(0x31)){posers=[[0x1,0x0,0x0],[0x0,0x1,0x0],[0x0,0x0,0x1],[-0x1,0x0,0x0],[0x0,-0x1,0x0],[0x0,0x0,-0x1]];for(i=0x0;i<posers[_0x1e8156(0x2d)];i++){p=posers[i],api[_0x1e8156(0x4c)]([_0x5bf510+p[0x0],_0x9adcdd+p[0x1],_0x3ea6e7+p[0x2]])==='Dim\x20Lamp\x20On'&&api['setBlock'](_0x5bf510,_0x9adcdd,_0x3ea6e7,_0x1e8156(0x14));}}if(_0x1628d5==='Bouncy\x20Bomb\x20Block'&&_0xe1a78===_0x1e8156(0x14)){blockpos=[_0x5bf510,_0x9adcdd,_0x3ea6e7],blockUnder=api[_0x1e8156(0x4c)](blockpos[0x0],blockpos[0x1]-0x1,blockpos[0x2]);if(blockUnder===_0x1e8156(0x52)){coords1=[blockpos[0x0]-0x6,blockpos[0x1]+0x1,blockpos[0x2]-0x6],coords2=[blockpos[0x0]+0x7,blockpos[0x1]+0x7,blockpos[0x2]+0x7],coord1=[blockpos[0x0]-0x4,blockpos[0x1],blockpos[0x2]-0x4],coord2=[blockpos[0x0]+0x4,blockpos[0x1]+0x4,blockpos[0x2]+0x4],enties=api[_0x1e8156(0x54)](coords1,coords2),damage=0x32,prot=0.6,rng=Math[_0x1e8156(0x2f)](Math[_0x1e8156(0x1f)]()*0x64)+0x1,api['playSound'](_0x16c818,sos,0.5,0x1);for(i=0x0;i<enties['length'];i++){id1=enties[i];if(isPlayer(id1)&&api[_0x1e8156(0x32)](id1)){api['playSound'](id1,sos,0.5,0x1),force=api[_0x1e8156(0x1c)](id1,0x1,0.3,0x14,[blockpos[0x0]+0.5,blockpos[0x1],blockpos[0x2]+0.5],!![])['force'],slotidx=api[_0x1e8156(0x26)](id1),itm=api[_0x1e8156(0x2a)](id1,slotidx);if(api[_0x1e8156(0xc)](id1)-Math[_0x1e8156(0x42)](damage*(0x1-prot))>0x5&&!(api['getEffects'](id1)[_0x1e8156(0x53)](_0x1e8156(0x49))||itm[_0x1e8156(0x3f)][_0x1e8156(0x1e)]===_0x1e8156(0x49)))api['applyHealthChange'](id1,-Math[_0x1e8156(0x42)](damage*(0x1-prot)),_0x16c818);else(api[_0x1e8156(0x24)](id1)[_0x1e8156(0x53)](_0x1e8156(0x49))||itm&&itm['attributes'][_0x1e8156(0x1e)]==='Extra\x20Life')&&api[_0x1e8156(0xc)](id1)-Math[_0x1e8156(0x42)](damage*(0x1-prot))<0x5?(poser=api['getPosition'](id1),itm&&itm[_0x1e8156(0x3f)]['displayName']===_0x1e8156(0x49)&&api[_0x1e8156(0x21)](id1,slotidx,'Gold\x20Spade',0x0),api[_0x1e8156(0x51)](id1,0xa),api[_0x1e8156(0x4d)](id1,_0x1e8156(0x40),0x9c40,{'inbuiltLevel':0x2}),api['setShieldAmount'](id1,0x14),api[_0x1e8156(0x3b)](id1,_0x1e8156(0x1a),0x1,0x1),api['removeEffect'](id1,_0x1e8156(0x49)),p3(poser[0x0],poser[0x1],poser[0x2])):api['applyHealthChange'](id1,-Math[_0x1e8156(0x42)](damage*(0x1-prot)),_0x16c818);api['applyImpulse'](id1,force[0x0]*(rng/0x32),force[0x1]*(rng/0x32),force[0x2]*(rng/0x32));}}for(_0x5bf510=coord1[0x0];_0x5bf510<coord2[0x0];_0x5bf510++){for(_0x9adcdd=coord1[0x1];_0x9adcdd<coord2[0x1];_0x9adcdd++){for(_0x3ea6e7=coord1[0x2];_0x3ea6e7<coord2[0x2];_0x3ea6e7++){curBlock=api[_0x1e8156(0x4c)](_0x5bf510,_0x9adcdd,_0x3ea6e7),curBlock!=='Obsidian'&&curBlock!==_0x1e8156(0x4a)&&api['setBlock'](_0x5bf510,_0x9adcdd,_0x3ea6e7,_0x1e8156(0x14));}}}}}}function _0x59d7(){var _0x39765c=['info-circle','playSound','setWalkThroughType','setBlock','6614766TKFcfu','attributes','Health\x20Regen','Diamond\x20Chestplate','round','name','Bouncy\x20Bomb\x20Block','getMobIds','pow','position','glint','Extra\x20Life','Bedrock','setCantChangeBlockRect','getBlock','applyEffect','End\x20Crystal','109866OhrqyA','applyHealthChange','setHealth','Obsidian','includes','getEntitiesInRect','Diamond\x20Sword','Bread','Glowstone','Diamond\x20Boots','1283020wjyjiu','Moonstone\x20Pickaxe','red','applyImpulse','7XryQWF','Arrow','Gold\x20Spade','getPlayerTargetInfo','20758810QwbptD','getHealth','force','Lobby\x20is\x20Full!\x20Max\x20player\x20count:\x2010.','Use\x20Glowstone\x20to\x20charge\x20it.','Try\x20Placing\x20it\x20on\x20obsidian\x20and\x20breaking\x20it.','getPosition','Diamond\x20Helmet','sqrt','Air','847446XvrNXi','getEntityName','cannonFire2','Charges\x20Respawn\x20Anchor.','Diamond\x20Gauntlets','cashRegister','blockID','calcExplosionForce','Cobweb','displayName','random','11gVGsna','setItemSlot','sendTopRightHelper','Dim\x20Lamp','getEffects','removeEffect','getSelectedInventorySlotI','MrChestplate','setShieldAmount','Dim\x20Lamp\x20On','getItemSlot','5xdjIcD','playParticleEffect','length','getPlayerIds','floor','Bouncy\x20Purple\x20Bomb','Golden\x20Decoration','isAlive','Haste','Respawn\x20Anchor','6042664cjuPmo','Subscribe\x20to\x20@Javeline\x20947!\x20Tutorial\x20on\x20Youtube!','141428xthuYO','56KzPxeN','Dim\x20Lamp\x20Off'];_0x59d7=function(){return _0x39765c;};return _0x59d7();}function _0x7735(_0x436af7,_0x59d7c4){var _0x7735c6=_0x59d7();return _0x7735=function(_0xcce612,_0x18d63d){_0xcce612=_0xcce612-0x0;var _0x42cde9=_0x7735c6[_0xcce612];return _0x42cde9;},_0x7735(_0x436af7,_0x59d7c4);}function onPlayerJoin(_0x4c450a){var _0xbde8d3=_0x7735;api[_0xbde8d3(0x2e)]()['length']>0xf&&api[_0xbde8d3(0x16)](_0x4c450a)!==_0xbde8d3(0x27)&&api['kickPlayer'](_0x4c450a,_0xbde8d3(0xe)),api[_0xbde8d3(0x3c)](_0x4c450a,'Bouncy\x20Bomb\x20Block'),api[_0xbde8d3(0x21)](_0x4c450a,0x0,_0xbde8d3(0x55),null),api[_0xbde8d3(0x21)](_0x4c450a,0x1,'Obsidian',0x3e7),api[_0xbde8d3(0x21)](_0x4c450a,0x2,_0xbde8d3(0x44),0x3e7,{'customDisplayName':_0xbde8d3(0x4e),'customDescription':_0xbde8d3(0x10)}),api[_0xbde8d3(0x21)](_0x4c450a,0x3,_0xbde8d3(0x1d),0x3e7),api[_0xbde8d3(0x21)](_0x4c450a,0x4,'Moonstone\x20Orb',0x3e7),api[_0xbde8d3(0x21)](_0x4c450a,0x5,_0xbde8d3(0x0),0x3e7),api[_0xbde8d3(0x21)](_0x4c450a,0x6,_0xbde8d3(0x39),0x3e7,{'customDisplayName':_0xbde8d3(0x34),'customDescription':_0xbde8d3(0xf)}),api[_0xbde8d3(0x21)](_0x4c450a,0x7,_0xbde8d3(0x31),0x3e7,{'customDisplayName':_0xbde8d3(0x1),'customDescription':_0xbde8d3(0x18)}),api[_0xbde8d3(0x21)](_0x4c450a,0x8,'Stone\x20Bow',0x1),api[_0xbde8d3(0x21)](_0x4c450a,0xa,_0xbde8d3(0x8),0x3e7),api['setItemSlot'](_0x4c450a,0x9,_0xbde8d3(0x4),0x3e7),api['giveItem'](_0x4c450a,_0xbde8d3(0x9),0x28,{'customDisplayName':_0xbde8d3(0x49),'customDescription':'With\x20a\x20Twist!'}),api['setItemSlot'](_0x4c450a,0x2e,_0xbde8d3(0x12),null),api[_0xbde8d3(0x21)](_0x4c450a,0x2f,_0xbde8d3(0x41),null),api[_0xbde8d3(0x21)](_0x4c450a,0x30,_0xbde8d3(0x19),null),api[_0xbde8d3(0x21)](_0x4c450a,0x31,'Diamond\x20Leggings',null),api[_0xbde8d3(0x21)](_0x4c450a,0x32,_0xbde8d3(0x2),null),api[_0xbde8d3(0x4d)](_0x4c450a,_0xbde8d3(0x33),null,{'inbuiltLevel':0x5}),api[_0xbde8d3(0x22)](_0x4c450a,_0xbde8d3(0x3a),_0xbde8d3(0x36),{'duration':0xa,'width':0x1f4,'height':0x12c,'color':_0xbde8d3(0x5),'textAndIconColor':'red'}),api[_0xbde8d3(0x4b)](_0x4c450a,[0xe,-0x14,-0x13],[-0x18,0x37,0x1d]);}
 ```
 
