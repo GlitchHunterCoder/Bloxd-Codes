@@ -440,6 +440,32 @@ onPlayerUsedThrowable = (id, item, itemId) => {
     }
 };
 ```
+### Illegal Blocks / Item Getter 
+#### Block Placer \(Mostly, Unloaded Doesnt Work\)
+Intialiser
+```js
+i=2
+```
+Iterator
+```js
+while(true){
+api.setBlockRect([40,25,i],[40,25,i],api.blockIdToBlockName(i));
+i+=1
+}
+```
+#### Item \(Mostly, Unloaded Doesnt Work\)
+Intialiser
+```js
+b=2
+```
+Iterator
+```js
+while(true){
+  c=""+b
+  api.editItemCraftingRecipes(myId,c,[{requires:[{items:["2"],amt:null}],produces:null,station:"Potion Table"}])
+  b+=1
+}
+```
 ## World Code
 ### Simple
 #### Timer \(1000 seconds\)
