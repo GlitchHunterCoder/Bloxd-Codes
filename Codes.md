@@ -352,6 +352,28 @@ console.log(styTxt("hello <c red><w bold>Red,bold <w>not bold <c#00F>blue <st it
 console.log("hello <c red><w bold>Red,bold <w>not bold <c#00F>blue <st italic>Italic<w 100>Thin <w900><s 30px>Big<o 0.2>Fad<cyellow>ed<r>Reset all\\<c red>escaped")
 ```
 ### Ray Casting
+#### Ray Casting
+```js
+onPlayerClick = (pid,alt) => {
+heldItem=api.getHeldItem(pid)["name"]
+if(heldItem=="Wood Axe") {
+cdir = api.getPlayerFacingInfo(pid)["dir"];
+cpos = api.getPlayerFacingInfo(pid)["camPos"];
+found=false
+for (let i = 0; ((i < 100)&&(found==false)); i++) {
+block = api.raycastForBlock(cpos, cdir)
+if(!(block==null)){
+block = block["adjacent"]
+found = true
+block[0]+=0.5
+block[2]+=0.5
+api.setPosition(pid,block)
+}
+cpos=[cpos[0]+(cdir[0]*5),cpos[1]+(cdir[1]*5),cpos[2]+(cdir[2]*5)]
+}  
+}
+}
+```
 #### Laser
 ```js
 onPlayerUsedThrowable = (id, item, itemId) => {
