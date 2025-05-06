@@ -219,7 +219,7 @@ It works because its triggered, it stores the list as a string, and so packaging
 when another code block is triggered, it gets the packaged list variable, and unpacks it back to a list to use
 
 \(This was made when lists couldnt be Global, That has now changed\)
-### TopRightHelper
+### TopRightHelper \(Credit to FrostyCaveman1\)
 first, a list of icons for TopRightHelper
 ```txt
 angle-double-up, angle-down, angle-up, angles-up, arrow-up, arrows-rotate, award, backpack, bars,block-question, bolt, caret-up, cart-shopping, check, chess-rook, circle-info, clock-rotate-left, cog, coins,comment-dots, commenting, compress, cookie, copy, crosshairs, crown, cube, cubes, dice, dizzy, door-closed,door-open, download, ellipsis-h, ellipsis, exclamation, expand, eye, eye-slash, face-dizzy, feather-alt,feather-pointed, film, fire, fist-raised, flag, folder-image, gauge-high, gear, gem, globe, hammer, hand-fist,hand-holding-medical, hand-point-left, hat-santa, heart, heart-music-camera-bolt, history, icons,info-circle, joystick, lightbulb, list-squares, list, location-check, location-xmark, lock, lock-open,magnifying-glass, map-marker-check, map-marker-times, map-marker-xmark, minus-square, music,navicon, palette, pen, pen-field, person-falling-burst, person-military-pointing, planet-ringed, power-off,redo-alt, refresh, right-from-bracket, rotate-forward, rotate-right, search, shield, shield-alt, shield-blank,shield-halved, shirt, shopping-cart, sign-out-alt, snowflake, square-minus, star, sync, t-shirt, tachometer-alt-fast,tachometer-alt, terminal, trophy, tshirt, up-from-bracket, user-friends, user-group, user-group-crown,user-plus, user-slash, user-unlock, users-crown, video-camera, video, volume-down, volume-low, wrench, x, zap, youtube
@@ -295,7 +295,7 @@ api.broadcastMessage([{str:"[⚡Super] ", style:{color:"Yellow", fontWeight:"0",
 ```js
 api.broadcastMessage([{str:"Sub", style:{color:"White", fontWeight:"0", fontSize:"100px", fontStyle:"", opacity:1}}])
 ```
-#### Styling Code \(Credit to ____\)
+#### Styling Code \(Credit to FrostyCaveman1\)
 ```js
 function styTxt(text) {
     let fn_ = styTxt
@@ -1069,7 +1069,7 @@ ordinary_tick_function=()=>{
 console.log("this message will be shown once every tick")
 }
 ```
-#### Chat JavaScript 
+#### Chat JavaScript \(Credit to FrostyCaveman1\)
 ```js
 function offsetPos(p, ...o) { return p.map((c, i) => c + o[i]) }
 function floorPos(p) { return p.map(Math.floor) }
@@ -1127,8 +1127,30 @@ Variables
 - `var` or `globalThis`: Accessible anywhere.
 - Implicit, without any of above, or this.: Inside eval context, shared between evals.
 Limitations
-- The ideal way for this is using a chat message like `!<code>`, but there is a profanity, spam and link blocks, which can't be controlled by onPlayerChat.
+- The ideal way for this is using a chat message like `/!<code>`, but there is a profanity, spam and link blocks, which can't be controlled by onPlayerChat.
 - `[]` characters can't be used in the chat. This is an issue when you need to dynamically access a property or create arrays. I added `obj@(1)`, and `A("1", "2")` (shortcut to `Array("1", "2")`) for now
+
+Usage in chat
+```js
+/e setPosition(myId, offsetPos(thisPos, 0, 30, 0)); log("30 blocks up")
+```
+tps you 30 blocks up
+```js
+/e test = 5; let localvar = 1 // 5 (if there is a return value, it will be sent in chat)
+```
+sets 2 variables, test to 5, and localvar to 1
+```js
+/e log(test * 2, localvar) // 10 undefined
+```
+logs test x 2 and localvar, this shows the difference between a localvar and a globalvar
+```js
+/e setBlock(thisBlockPos, "Stone")
+```
+sets current block you are at to stone
+```js
+/e thisPos@(0) // your x coord
+```
+gets your current x coordinate
 ### Rendering
 #### Music \( World Code + Code Block \)
 World Code
