@@ -5,6 +5,7 @@ they are split into 3 parts
 - Code Blocks, codes which only needs a code block
 - World Code, codes which live in world code, and may also need code blocks to function
 - Board Code, uses of `press to ...` signs to make codes
+
 in each of these, they will have a title and code attached, each code is unrelated to another unless stated otherwise
 if i dont know who made the code \(credits to ____\) will be left
 
@@ -356,7 +357,7 @@ console.log(styTxt("hello <c red><w bold>Red,bold <w>not bold <c#00F>blue <st it
 console.log("hello <c red><w bold>Red,bold <w>not bold <c#00F>blue <st italic>Italic<w 100>Thin <w900><s 30px>Big<o 0.2>Fad<cyellow>ed<r>Reset all\\<c red>escaped")
 ```
 ### Ray Casting
-#### Ray Casting
+#### Ray Casting \(credits to `(Ocelote) Solve 3+3/3*3/3-3/3/3`\ on dc)
 ```js
 onPlayerClick = (pid,alt) => {
 heldItem=api.getHeldItem(pid)["name"]
