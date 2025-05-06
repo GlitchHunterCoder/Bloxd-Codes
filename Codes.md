@@ -219,6 +219,10 @@ when another code block is triggered, it gets the packaged list variable, and un
 
 \(This was made when lists couldnt be Global, That has now changed\)
 ### TopRightHelper
+first, a list of icons for TopRightHelper
+```txt
+angle-double-up, angle-down, angle-up, angles-up, arrow-up, arrows-rotate, award, backpack, bars,block-question, bolt, caret-up, cart-shopping, check, chess-rook, circle-info, clock-rotate-left, cog, coins,comment-dots, commenting, compress, cookie, copy, crosshairs, crown, cube, cubes, dice, dizzy, door-closed,door-open, download, ellipsis-h, ellipsis, exclamation, expand, eye, eye-slash, face-dizzy, feather-alt,feather-pointed, film, fire, fist-raised, flag, folder-image, gauge-high, gear, gem, globe, hammer, hand-fist,hand-holding-medical, hand-point-left, hat-santa, heart, heart-music-camera-bolt, history, icons,info-circle, joystick, lightbulb, list-squares, list, location-check, location-xmark, lock, lock-open,magnifying-glass, map-marker-check, map-marker-times, map-marker-xmark, minus-square, music,navicon, palette, pen, pen-field, person-falling-burst, person-military-pointing, planet-ringed, power-off,redo-alt, refresh, right-from-bracket, rotate-forward, rotate-right, search, shield, shield-alt, shield-blank,shield-halved, shirt, shopping-cart, sign-out-alt, snowflake, square-minus, star, sync, t-shirt, tachometer-alt-fast,tachometer-alt, terminal, trophy, tshirt, up-from-bracket, user-friends, user-group, user-group-crown,user-plus, user-slash, user-unlock, users-crown, video-camera, video, volume-down, volume-low, wrench, x, zap, youtube
+```
 #### Data Getter \(Credit to `Binary`\)
 ```js
 const playerIds = api.getPlayerIds();
