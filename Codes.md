@@ -1119,17 +1119,16 @@ playerCommand = (pId, cmd) => {
 ```
 This lets you quickly and easily run code from chat, making developing or testing things easier.
 
-- Specials in evals: myId, thisPos, thisBlockPos, log(). You can add more utility on the ctx object. The eval can also access things outside it, e.g. the offsetPos function (including let/const vars, which is an advantage over using a code block).
-- Game API methods are accessible without api. in eval.
-- Warning: Anyone can use it by default. If you don't want this, set the users to an array of DbIds. `/e getPlayerDbId(myId)`
+- Specials in evals: `myId`, `thisPos`, `thisBlockPos`, `log()`. You can add more utility on the ctx object. The eval can also access things outside it, e.g. the `offsetPos` function (including `let`/`const` vars, which is an advantage over using a code block).
+- Game API methods are accessible without `api.` in eval.
+- Warning: Anyone can use it by default. If you don't want this, set the users to an array of `DbIds`. `/e getPlayerDbId(myId)`
 Variables
-- let or const: Local to current eval.
-- var or globalThis.: Accessible anywhere.
+- `let` or `const`: Local to current eval.
+- `var` or `globalThis`: Accessible anywhere.
 - Implicit, without any of above, or this.: Inside eval context, shared between evals.
 Limitations
-- The ideal way for this is using a chat message like !<code>, but there is a profanity, spam and link blocks, which can't be controlled by onPlayerChat.
-- \[\] characters can't be used in the chat. This is an issue when you need to dynamically access a property or create arrays. I added obj@(1), and A("1", "2") (shortcut to Array("1", "2")) for now. Report for that bug:  ⁠unknown
-Hope to see the game devs address these.
+- The ideal way for this is using a chat message like `!<code>`, but there is a profanity, spam and link blocks, which can't be controlled by onPlayerChat.
+- `[]` characters can't be used in the chat. This is an issue when you need to dynamically access a property or create arrays. I added `obj@(1)`, and `A("1", "2")` (shortcut to `Array("1", "2")`) for now
 ### Rendering
 #### Music \( World Code + Code Block \)
 World Code
