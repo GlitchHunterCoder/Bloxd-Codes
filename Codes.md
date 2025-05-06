@@ -1151,6 +1151,43 @@ sets current block you are at to stone
 /e thisPos@(0) // your x coord
 ```
 gets your current x coordinate
+#### Animation
+```js
+function set_frame(n) {
+    build_coords = [1014, -140, 1085] // animation coords
+    frame_size = [-3, 10, -3] // start coords for x > end coords x, start y < end y, start z > end z
+    start_coords = [1014, -140, 1074] //coords of first frame
+    for (x = 0; x > frame_size[0] ; x--) { //start x > end x
+        for (y = 0; y < 10; y++) {// start y < end y
+            for (z = 0; z > frame_size[1]; z--) { // start z > end z
+                api.setBlock(
+                    build_coords[0] + x,
+                    build_coords[1] + y,
+                    build_coords[2] + z,
+                    api.getBlock(start_coords[0] + x,
+                                 start_coords[1] + y,
+                                 start_coords[2] + z - (frame_size - 1) * n)) // frame build in the direction of decreasing the coordinate z
+// example: first frame z = 10, second on 6, third on 2...
+// frame_size - 1  -  1 is blocks betwen frames
+            }
+        }
+    }
+};
+
+api.log("World code callbacks go here!")
+timer = 0;
+frame_count = 19 // count of frames
+frame = 0
+tick = () => {
+    timer++;
+    if (timer >= 5) { // 5 is time between frames
+        timer = 0;
+        frame++;
+        if (frame >  frame_count) {frame = 0};
+        set_frame(frame); //n frame, build coords
+        };
+}
+```
 ### Rendering
 #### Music \( World Code + Code Block \)
 World Code
