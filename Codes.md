@@ -357,7 +357,7 @@ console.log(styTxt("hello <c red><w bold>Red,bold <w>not bold <c#00F>blue <st it
 console.log("hello <c red><w bold>Red,bold <w>not bold <c#00F>blue <st italic>Italic<w 100>Thin <w900><s 30px>Big<o 0.2>Fad<cyellow>ed<r>Reset all\\<c red>escaped")
 ```
 ### Ray Casting
-#### Ray Casting \(credits to `(Ocelote) Solve 3+3/3*3/3-3/3/3`\ on dc)
+#### Ray Casting \(credits to `Ocelote`\)
 ```js
 onPlayerClick = (pid,alt) => {
 heldItem=api.getHeldItem(pid)["name"]
@@ -1013,7 +1013,12 @@ Code Block to get World Edit Axe
 ```js
  api.giveItem(myId, "Moonstone Axe", 1, {customDisplayName: "WorldEdit Tool", customDescription: "Set EZ WorldEdit Positions"});
 ```
-#### Helpful Axes
+How to use:
+Mark two points by right clicking (once fore each point) while holding the moonstone axe.
+If your first position is already set, the second one will be set automatically.
+Then type in chat `:f [block]`, but replace block with your desired block!
+(If you get an error, left click to set the coordinates back to null)
+#### Helpful Axes \(credits to `Ocelote`\)
 - Wood Axe-tp anywhere u look (up to 150 blocks distance)
 - Stone Axe-tp 1 block in the direction u look (use to go thru blocks)
 - Iron Axe-Travel Fast in the direction you look
@@ -1040,7 +1045,7 @@ onPlayerClick = (e, $) => {
   }
 };
 ```
-#### setTimeOut World Code \( + Code Block Usage\)
+#### setTimeOut World Code \( + Code Block Usage\) \(credits to `sulfrox`\)
 World Code \(Minified\)
 ```js
 let ordinary_tick_function,do_next_tick_queue=new Set,timed_functions_queue=[];function tick(t){if("function"==typeof ordinary_tick_function&&ordinary_tick_function(t),do_next_tick_queue.forEach((t=>{"function"==typeof t&&t(),do_next_tick_queue.delete(t)})),timed_functions_queue.length&&timed_functions_queue[0][0]<api.now()){try{timed_functions_queue[0][1]()}catch{}timed_functions_queue=timed_functions_queue.slice(1)}}do_this_next_tick=t=>{"function"==typeof t&&do_next_tick_queue.add(t)},setTimeOut=(t,e)=>{let n=Date.now()+e;"function"==typeof t&&(timed_functions_queue.push([n,t]),timed_functions_queue.sort((([t],[e])=>t-e)))};
@@ -1064,6 +1069,67 @@ ordinary_tick_function=()=>{
 console.log("this message will be shown once every tick")
 }
 ```
+#### Chat JavaScript 
+```js
+function offsetPos(p, ...o) { return p.map((c, i) => c + o[i]) }
+function floorPos(p) { return p.map(Math.floor) }
+
+const EVALCMD_USERS = null /* ["dbId"], anyone can use if null */
+const evalCmd = {
+    prefix: "e",
+    context: { ...api },
+    REGEX_VAR: /(?:(?<type>var|let|const)\s+)?(?<!([\.\(\w$]))(?<name>[a-zA-Z_$][\w$]*)\s*=(?![>=])/g,
+    REGEX_PROP: /([\w\(\)]+)\s*@\((.+?)\)/g,
+    execute: (pId, content) => {
+        if (EVALCMD_USERS?.includes(api.getPlayerDbId(pId)) == false)
+            return
+        const ctx = evalCmd.context
+        const stry = o => typeof o == "object" ? JSON.stringify(o) : "" + o
+
+        ctx.myId = pId
+        ctx.thisPos = api.getPosition(pId)
+        ctx.thisBlockPos = floorPos(ctx.thisPos)
+        ctx.log = (...a) => api.sendMessage(pId, a.map(stry).join(" "))
+        ctx.A = Array
+
+        content = content.replace(evalCmd.REGEX_VAR, (match, ...args) => {
+            const { type, name } = args.at(-1)
+            if (type == "var")
+                return "globalThis." + name + "="
+            if (!type && !(name in ctx))
+                ctx[name] = undefined
+            return match
+        }).replace(evalCmd.REGEX_PROP, "$1[$2]")
+        const res = (function () {
+            try { with (ctx) return eval(content) }
+            catch (err) { return err }
+        }).call(ctx)
+        if (res instanceof Error)
+            api.sendMessage(pId, "Eval Error: " + res.message, { color: "#ff9d87" })
+        else
+            api.sendMessage(pId, res != null ? stry(res) : "Executed.", { color: "#2eeb82" })
+    }
+}
+
+playerCommand = (pId, cmd) => {
+    if (cmd.split(" ")[0] == evalCmd.prefix) {
+        return evalCmd.execute(pId, cmd.slice(evalCmd.prefix.length)), true
+    }
+}
+```
+This lets you quickly and easily run code from chat, making developing or testing things easier.
+
+- Specials in evals: myId, thisPos, thisBlockPos, log(). You can add more utility on the ctx object. The eval can also access things outside it, e.g. the offsetPos function (including let/const vars, which is an advantage over using a code block).
+- Game API methods are accessible without api. in eval.
+- Warning: Anyone can use it by default. If you don't want this, set the users to an array of DbIds. `/e getPlayerDbId(myId)`
+Variables
+- let or const: Local to current eval.
+- var or globalThis.: Accessible anywhere.
+- Implicit, without any of above, or this.: Inside eval context, shared between evals.
+Limitations
+- The ideal way for this is using a chat message like !<code>, but there is a profanity, spam and link blocks, which can't be controlled by onPlayerChat.
+- \[\] characters can't be used in the chat. This is an issue when you need to dynamically access a property or create arrays. I added obj@(1), and A("1", "2") (shortcut to Array("1", "2")) for now. Report for that bug:  ⁠unknown
+Hope to see the game devs address these.
 ### Rendering
 #### Music \( World Code + Code Block \)
 World Code
