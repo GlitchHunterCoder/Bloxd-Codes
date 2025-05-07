@@ -1188,6 +1188,151 @@ tick = () => {
         };
 }
 ```
+#### Utility Pack \(credits to `Ocelote`\)
+```js
+const  oce={
+/* credit to Ocelote for making the oce utilities */
+/**
+* detect whether a coordinate lies in a certain rectangle (inclusive)
+* also works for block coordinates (inclusive) if an integer
+* @param coordinate to check for
+* @param pos1
+* @param pos2
+*
+* @returns coordinate to check for lies within the rectangle pos1 and pos2
+*/
+coordInRect: function ([x,y,z],[a,b,c],[d,e,f]){
+let xIn=((x>=Math.min(a,d))&&(x<=Math.max(a,d)));
+let yIn=((y>=Math.min(b,e))&&(y<=Math.max(b,e)));
+let zIn=((z>=Math.min(c,f))&&(z<=Math.max(c,f)));
+return ((xIn)&&(yIn)&&(zIn));
+},
+/**
+* modify a coordinate to work with schematics or being copy pasted somewhere else
+* also works for block coordinates (inclusive) if an integer
+* Note: only works for code blocks because it uses this thisPos
+* example use case:
+* Your lobby spawn is at 100000 -1000 100000 and you have code blocks around that area which teleports players assuming that the world is mainly over there. But then you want to save it as a schematic. To prevent the teleports from breaking, the coordinate to tp to, and for second parameter enter the original position of the code block in each code block, and it will return modified coordinates to tp to by comparing the original coordinates to thisPos.
+* @param original coordinate
+* @param original position of the code block (do not use thisPos)
+*
+* @returns the modified coordinate based on current position vs actual position of code block
+*/
+modifyCoord: function (coord,originalPos){
+let modified = coord
+modified[0]+=thisPos[0]-Math.floor(originalPos[0]);
+modified[1]+=thisPos[1]-Math.floor(originalPos[1]);
+modified[2]+=thisPos[2]-Math.floor(originalPos[2]);
+return (modified);
+},
+/**
+* Get a random integer (as a float) between two numbers (both inclusive)
+* @param smallest number
+* @param greatest number
+* 
+* @returns a random integer between two numbers (inclusive)
+*/
+randomBetween: function (num1=0,num2=0){
+let low = Math.min(num1,num2)
+let high = Math.max(num1,num2)
+let lowInt = Math.ceil(low)
+let highInt = Math.floor(high)+1
+let distance = highInt-lowInt
+let randInt = Math.floor(Math.random()*distance)+lowInt
+return (randInt);
+},
+/**
+* Get a random item from a list
+* @param list
+* 
+* @returns a random item from the list
+*/
+
+randomItem: function (list=[]){
+let randomIdx = Math.floor(Math.random()*list.length)
+let randomItem = list[randomIdx];
+return (randomItem);
+},
+/**
+* Get a random item from a list with weight probabilities
+* Note: list of items and list of wieghts must be equal in length but some types of mismatch are handled
+* @param list of items
+* @param list of weight probabilities
+*
+* @returns a random item from the list based on the weights
+*/
+
+randomItemWeighted: function (origList=[],origWeights=[1]){
+let maxLength = Math.max(origList.length,origWeights.length)
+let list = origList.concat(Array(maxLength).fill(null)).slice(0,maxLength)
+let weights = origWeights.concat(Array(maxLength).fill(null)).slice(0,maxLength)
+let addedWeights = [];
+let total = 0;
+for (let i = 0; i < weights.length; i++) {
+total += weights[i];
+addedWeights.push(total);
+}
+let randNum = Math.random() * total;
+
+for (let i = 0; i < addedWeights.length; i++) {
+if (randNum < addedWeights[i]) {
+return list[i];
+    }
+  }
+}
+  }
+```
+Hello World,
+I have created some potentially utility functions accessible using `oce.utilityName(parameter1,parameter2,etc)`
+```js
+/* credit to Ocelote for making the oce utilities */
+/**
+* detect whether a coordinate lies in a certain rectangle (inclusive)
+* also works for block coordinates (inclusive) if an integer
+* @param coordinate to check for
+* @param pos1
+* @param pos2
+*
+* @returns coordinate to check for lies within the rectangle pos1 and pos2
+*/
+coordInRect([x,y,z],[a,b,c],[d,e,f]): boolean
+/**
+* modify a coordinate to work with schematics or being copy pasted somewhere else
+* also works for block coordinates (inclusive) if an integer
+* Note: only works for code blocks because it uses this thisPos
+* example use case:
+* Your lobby spawn is at 100000 -1000 100000 and you have code blocks around that area which teleports players assuming that the world is mainly over there. But then you want to save it as a schematic. To prevent the teleports from breaking, the coordinate to tp to, and for second parameter enter the original position of the code block in each code block, and it will return modified coordinates to tp to by comparing the original coordinates to thisPos.
+* @param original coordinate
+* @param original position of the code block (do not use thisPos)
+*
+* @returns the modified coordinate based on current position vs actual position of code block
+*/
+modifyCoord(coord,originalPos): [number, number, number]
+/**
+* Get a random integer (as a float) between two numbers (both inclusive)
+* @param smallest number
+* @param greatest number
+* 
+* @returns a random integer between two numbers (inclusive)
+*/
+randomBetween(num1=0,num2=0): number
+/**
+* Get a random item from a list
+* @param list
+* 
+* @returns a random item from the list
+*/
+randomItem(list=[]): any
+/**
+* Get a random item from a list with weight probabilities
+* Note: list of items and list of wieghts must be equal in length but some types of mismatch are handled
+* @param list of items
+* @param list of weight probabilities
+*
+* @returns a random item from the list based on the weights
+*/
+randomItemWeighted(origList=[],origWeights=[1]): any   
+```
 ### Rendering
 #### Music \( World Code + Code Block \)
 World Code
