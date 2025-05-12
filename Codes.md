@@ -711,7 +711,7 @@ function onPlayerJoin(id){
 	api.setItemSlot(id, 0, "Artisan Shears", null, {customDescription: "Attack to amputate other players!", customDisplayName:"Amputation Shear"})
 }
 ```
-#### Crystal PvP \(Credit to `MrChestplate`\)
+#### Crystal PvP \(Credit to `MrChestplate`\) \(un obfuscated\)
 ```js
 sos = "cannonFire2";
 anchors = {};
@@ -1086,7 +1086,7 @@ onPlayerClick = (e, $) => {
   }
 };
 ```
-#### setTimeOut World Code \( + Code Block Usage\) \(credits to `sulfrox`\)
+#### setTimeOut v1 World Code \( + Code Block Usage\) \(credits to `sulfrox`\)
 World Code \(Minified\)
 ```js
 let ordinary_tick_function,do_next_tick_queue=new Set,timed_functions_queue=[];function tick(t){if("function"==typeof ordinary_tick_function&&ordinary_tick_function(t),do_next_tick_queue.forEach((t=>{"function"==typeof t&&t(),do_next_tick_queue.delete(t)})),timed_functions_queue.length&&timed_functions_queue[0][0]<api.now()){try{timed_functions_queue[0][1]()}catch{}timed_functions_queue=timed_functions_queue.slice(1)}}do_this_next_tick=t=>{"function"==typeof t&&do_next_tick_queue.add(t)},setTimeOut=(t,e)=>{let n=Date.now()+e;"function"==typeof t&&(timed_functions_queue.push([n,t]),timed_functions_queue.sort((([t],[e])=>t-e)))};
@@ -1108,6 +1108,37 @@ do_this_next_tick(
 ```js
 ordinary_tick_function=()=>{
 console.log("this message will be shown once every tick")
+}
+```
+#### setTimeOut v2 \(credits to `sulfrox`\)
+```js
+//used a modified version of the library github.com/luciopaiva/heapify for priority queue
+class MinQueue{constructor(t,i,s){i=s=Uint32Array,this.c=t,this.k=new i(t+1),this.p=new s(t+1),this.h=!1,this.l=0}bbu(t){const i=this.k[t],s=this.p[t];for(;t>1;){const i=t>>>1;if(this.p[i]<=s)break;this.k[t]=this.k[i],this.p[t]=this.p[i],t=i}this.k[t]=i,this.p[t]=s}bbd(t){const i=this.k[t],s=this.p[t],h=1+(this.l>>>1),p=this.l+1;for(;t<h;){const i=t<<1;let h=this.p[i],e=this.k[i],r=i;const k=i+1;if(k<p){const t=this.p[k];t<h&&(h=t,e=this.k[k],r=k)}if(h>=s)break;this.k[t]=e,this.p[t]=h,t=r}this.k[t]=i,this.p[t]=s}push(t,i){if(this.l===this.c)throw"heap full";if(this.h)this.k[1]=t,this.p[1]=i,this.l++,this.bbd(1),this.h=!1;else{const s=this.l+1;this.k[s]=t,this.p[s]=i,this.l++,this.bbu(s)}}pop(){if(0!==this.l)return this.rpe(),this.l--,this.h=!0,this.k[1]}peekPriority(){if(0!==this.l)return this.rpe(),this.p[1]}peek(){if(0!==this.l)return this.rpe(),this.k[1]}rpe(){this.h&&(this.k[1]=this.k[this.l+1],this.p[1]=this.p[this.l+1],this.bbd(1),this.h=!1)}}
+let TimerQueue = new MinQueue(1024);
+let TimerDictionary = [];
+let TimerNum = 0;
+let TickNum = 0;
+let currently_running_timer;
+function setTimeout(fn, time) {
+    let time_of_execution = TickNum+Math.floor(time/50);//1000=20*50
+    TimerDictionary[TimerNum] = fn;
+    TimerQueue.push(TimerNum, time_of_execution);
+    TimerNum++;
+}
+function tick() {
+    TickNum++;
+    if(currently_running_timer) {
+        //note that one single faulty timer can block the entire system
+        currently_running_timer();
+        currently_running_timer=undefined;
+    } else {
+        if(TimerQueue.peekPriority()<=TickNum) {
+            let function_id = TimerQueue.peek();
+            if(function_id!==undefined)currently_running_timer=TimerDictionary[function_id];
+            TimerQueue.pop();
+            delete(TimerDictionary[function_id]);
+        }
+    }
 }
 ```
 #### Chat JavaScript \(Credit to FrostyCaveman1\)
