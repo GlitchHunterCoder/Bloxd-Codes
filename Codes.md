@@ -1472,7 +1472,7 @@ const song = [{"midi":60,"time":0.06979166666666667,"velocity":0.574803149606299
 playSong(myId, song);
 ```
 Extra
-[Midi To Code Converter](https://tonejs.github.io/Midi/)
+run a midi file through [Midi To Text](http://tonejs.github.io/Midi/), then apply the jq \(online version: [JSON Query](https://play.jqlang.org)\) filter `[.tracks[0].notes[] | pick(.midi, .time, .velocity)]` to the JSON object \(with compact mode so it doesn't overflow bloxd\) 
 ## Board Code
 
 ## Other
