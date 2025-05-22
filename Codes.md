@@ -1692,6 +1692,29 @@ onPlayerChat = (playerId, chatMessage, channelName) => {
     return null;  // Suppress default message
 };
 ```
+#### Board Reader
+```js
+function getData(pos) {
+
+    let relative_pos = pos.map(v=>(v%32+32)%32);
+    //api.log(relative_pos);
+    let ret=undefined;
+    api.getChunk(pos).extraInfo.specialBlocks.forEach(
+        (val, index)=>{
+            //api.log(relative_pos,val.pos,isEqual(relative_pos,val.pos));
+            if(isEqual(relative_pos,val.pos)) {
+                if(val.persisted && val.persisted.shared && val.persisted.shared.uncensoredText){
+                    ret= val.persisted.shared.uncensoredText;
+                    api.getChunk(needed_position).extraInfo.specialBlocks[index].persisted.shared.unsensoredText="abc";
+                }else{
+                    ret=null;
+                }
+            }
+        }
+    );
+    return ret;
+}
+```
 ### Rendering
 #### Music \( World Code + Code Block \)
 World Code
