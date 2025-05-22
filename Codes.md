@@ -1086,6 +1086,25 @@ onPlayerClick = (e, $) => {
   }
 };
 ```
+#### Helpful Spades \(credits to `Ocelote`\)
+Main:
+- Wood Spade: Extends the block you click on
+- Stone Spade: Cycles through states of a block (basically debug stick)
+AI Stuff:
+- Iron Spade: Detects and place what block goes in the spot you click on
+- Gold Spade: Heals blocks around you whenever you click with it (may get interrupted frequently)
+- Diamond Spade: Just walk around with this in hand and it auto builds for you.
+
+Recommended test world type:
+- Default (not flat world)
+- Private
+- Get all the spades in your hand before you begin testing
+- Go near grass.
+```
+const ownerDbId="/*insert dbId here*/";
+
+onPlayerClick=e=>{if(api.getPlayerDbId(e)==ownerDbId){let t=api.getHeldItem(e);if(null==t);else{let l=t.name,r=api.getPlayerTargetInfo(e);if(null==r&&"Gold Spade"!==l);else{if("Wood Spade"===l){let o=r.position,n=r.adjacent,i=r.normal,f=api.getPosition(e);f[0]+=i[0],f[1]+=i[1],f[2]+=i[2],api.setBlock(n,api.getBlock(o)),api.setPosition(e,f)}if("Stone Spade"===l){function a(e){let t=api.getInitialItemMetadata(e),l=t.meta.rootId,r=t.id,o=api.getInitialItemMetadata(r+1+"");return o.meta.rootId===l?o.name:api.getInitialItemMetadata(l+"").name}let u=r.position,s=a(api.getBlock(u));api.setBlock(u,s)}if("Iron Spade"===l){r.position;let d=r.adjacent;function $(e,t){return Array.isArray(e)?e.filter(e=>e!==t):[]}function _(e){let[t,l,r]=e;return[[t+1,l,r],[t-1,l,r],[t,l+1,r],[t,l-1,r],[t,l,r+1],[t,l,r-1]]}function g(e){if(!Array.isArray(e)||0===e.length)return;let t=new Map,l=0;for(let r of e){let o=(t.get(r)||0)+1;t.set(r,o),o>l&&(l=o)}let n=[];for(let[i,f]of t.entries())f===l&&n.push(i);let a=n.filter(e=>void 0!==e),u;if((u=a.length>0?a:n).length>1&&(u=$(u,"Air")),0===u.length)return;let s=Math.floor(Math.random()*u.length);return u[s]}r.normal;let h=_(d),p=[];for(let m=0;m<6;m++)p.push(api.getBlock(h[m]));let c=[];p[0]==p[1]&&c.push(p[0]),p[2]==p[3]&&c.push(p[2]),p[4]==p[5]&&c.push(p[4]),p=$(p,"Air"),c.push(g(p)),api.setBlock(d,g(c))}if("Gold Spade"===l){function $(e,t){return Array.isArray(e)?e.filter(e=>e!==t):[]}function _(e){let[t,l,r]=e;return[[t+1,l,r],[t-1,l,r],[t,l+1,r],[t,l-1,r],[t,l,r+1],[t,l,r-1]]}function g(e){if(!Array.isArray(e)||0===e.length)return;let t=new Map,l=0;for(let r of e){let o=(t.get(r)||0)+1;t.set(r,o),o>l&&(l=o)}let n=[];for(let[i,f]of t.entries())f===l&&n.push(i);let a=n.filter(e=>void 0!==e),u;if((u=a.length>0?a:n).length>1&&(u=$(u,"Air")),0===u.length)return;let s=Math.floor(Math.random()*u.length);return u[s]}for(let I=0;I<50;I++){(ppos=api.getPosition(e))[0]=Math.floor(ppos[0]+5*Math.random()-2.5),ppos[1]=Math.floor(ppos[1]+3*Math.random()-1.5),ppos[2]=Math.floor(ppos[2]+5*Math.random()-2.5);let k=_(ppos),A=[];for(let B=0;B<6;B++)A.push(api.getBlock(k[B]));let y=[];A[0]==A[1]&&y.push(A[0]),A[2]==A[3]&&y.push(A[2]),A[4]==A[5]&&y.push(A[4]),A=$(A,"Air"),y.push(g(A)),api.setBlock(ppos,g(y))}}}}}},tick=()=>{let e=api.getPlayerIdFromDbId(ownerDbId);if(null!=e){let t=api.getHeldItem(e);if(null==t);else if("Diamond Spade"===t.name){function l(e,t){return Array.isArray(e)?e.filter(e=>e!==t):[]}function r(e){let[t,l,r]=e;return[[t+1,l,r],[t-1,l,r],[t,l+1,r],[t,l-1,r],[t,l,r+1],[t,l,r-1]]}function o(e){if(!Array.isArray(e)||0===e.length)return;let t=new Map,r=0;for(let o of e){let n=(t.get(o)||0)+1;t.set(o,n),n>r&&(r=n)}let i=[];for(let[f,a]of t.entries())a===r&&i.push(f);let u=i.filter(e=>void 0!==e),s;if((s=u.length>0?u:i).length>1&&(s=l(s,"Air")),0===s.length)return;let d=Math.floor(Math.random()*s.length);return s[d]}for(let n=0;n<3;n++){(ppos=api.getPosition(e))[0]=Math.floor(ppos[0]+4*Math.random()-2),ppos[1]=Math.floor(ppos[1]+3*Math.random()-1.5),ppos[2]=Math.floor(ppos[2]+4*Math.random()-2);let i=r(ppos),f=[];for(let a=0;a<6;a++)f.push(api.getBlock(i[a]));let u=[];f[0]==f[1]&&u.push(f[0]),f[2]==f[3]&&u.push(f[2]),f[4]==f[5]&&u.push(f[4]),f=l(f,"Air"),u.push(o(f)),api.setBlock(ppos,o(u))}}}};
+```
 #### setTimeOut v1 World Code \( + Code Block Usage\) \(credits to `sulfrox`\)
 World Code \(Minified\)
 ```js
@@ -1418,6 +1437,260 @@ uplus.showActionbar(playerId, text, ticksToStay)
 
 uplus.setListContent(playerId, text, ticksToStay)
 
+```
+#### AI in Bloxd
+```js
+class SimpleLLM {
+  constructor() {
+    this.wordPairs = {};
+    this.replyMemory = {}; // Maps: botSaid -> humanReply
+    this.lastBotMessage = null;
+    this.waitingForReply = false;
+  }
+
+  train(text) {
+    const tokens = this.tokenize(text);
+    for (let i = 0; i < tokens.length - 1; i++) {
+      const word = tokens[i];
+      const nextWord = tokens[i + 1];
+
+      if (!this.wordPairs[word]) this.wordPairs[word] = {};
+      if (!this.wordPairs[word][nextWord]) this.wordPairs[word][nextWord] = 0;
+      this.wordPairs[word][nextWord]++;
+    }
+  }
+
+  rememberReply(botSaid, humanSaid) {
+    this.replyMemory[botSaid.toLowerCase()] = humanSaid;
+  }
+
+  getMemoryReply(input) {
+    return this.replyMemory[input.toLowerCase()];
+  }
+
+  generateReply(input, length = 15) {
+    const memory = this.getMemoryReply(input);
+    if (memory) return memory;
+
+    const tokens = this.tokenize(input);
+    let startWord = tokens.find(word => this.wordPairs[word]);
+
+    if (!startWord) {
+      const keys = Object.keys(this.wordPairs);
+      if (keys.length === 0) return "I don't know what to say yet.";
+      startWord = keys[Math.floor(Math.random() * keys.length)];
+    }
+
+    return this.generate(startWord, length);
+  }
+
+  generate(startWord, length = 10) {
+    let currentWord = startWord;
+    let result = [currentWord];
+
+    for (let i = 0; i < length - 1; i++) {
+      const nextWord = this.getNextWord(currentWord);
+      if (!nextWord) break;
+      result.push(nextWord);
+      currentWord = nextWord;
+    }
+
+    return result.join(" ");
+  }
+
+  tokenize(text) {
+    return text.toLowerCase().replace(/[^\w\s]/g, "").split(/\s+/);
+  }
+
+  getNextWord(word) {
+    const nextWords = this.wordPairs[word];
+    if (!nextWords) return null;
+
+    const total = Object.values(nextWords).reduce((sum, count) => sum + count, 0);
+    const rand = Math.random() * total;
+
+    let cumulative = 0;
+    for (const [nextWord, count] of Object.entries(nextWords)) {
+      cumulative += count;
+      if (rand < cumulative) {
+        return nextWord;
+      }
+    }
+
+    return null;
+  }
+}
+
+const chatbot = new SimpleLLM();
+let lastSpeakerWasBot = false;
+
+onPlayerChat = (playerId, message) => {
+  chatbot.train(message);
+
+  if (chatbot.waitingForReply && !lastSpeakerWasBot) {
+    chatbot.rememberReply(chatbot.lastBotMessage, message);
+    chatbot.waitingForReply = false;
+  }
+
+  const response = chatbot.generateReply(message);
+  chatbot.lastBotMessage = response;
+  chatbot.waitingForReply = true;
+
+  api.broadcastMessage(`🤖 Chatbot: ${response}`);
+  lastSpeakerWasBot = true;
+}
+```
+#### Roblox Chat Bubble + Extra
+```js
+function onPlayerJoin(myId) {
+    // Get the player's name
+    const playerName = api.getEntityName(myId);
+    
+    // Check if the player is the owner (XxFahadxX)
+    if (playerName === "GlitchHunter") /* <-- Change it to your username :3 !! */ {
+        // Define rainbow colors in traditional order
+        const colors = [
+            "#FF0000", // Red
+            "#FF4500", // Red-Orange
+            "#FF8C00", // Dark Orange
+            "#FFA500", // Orange
+            "#FFD700", // Gold
+            "#FFFF00", // Yellow
+            "#ADFF2F", // Yellow-Green
+            "#00FF00", // Green
+            "#00FA9A", // Medium Spring Green
+            "#00FFFF", // Cyan
+            "#1E90FF", // Dodger Blue
+            "#0000FF", // Blue
+            "#4B0082", // Indigo
+            "#8A2BE2", // Blue Violet
+            "#9400D3", // Violet
+            "#FF00FF"  // Magenta
+        ];
+        
+        let styledMessage = [];
+        const message = `The Owner Has Joined The Server! ${playerName}`;
+        
+        // Split the message into two parts: the rainbow part and the entity name
+        const messageWithoutName = message.slice(0, message.length - playerName.length); // All but the entity name
+        const entityName = playerName; // Entity name to be colored yellow
+        
+        // Pre-calculate how many characters we have in the rainbow part (excluding spaces)
+        const nonSpaceChars = messageWithoutName.replace(/ /g, "").length;
+        
+        // Calculate how many colors we need per cycle to complete one smooth transition
+        const colorStep = colors.length / nonSpaceChars;
+        
+        // Initialize color position for rainbow part
+        let colorPosition = 0;
+        
+        // Add the rainbow effect for the message part before the entity name
+        for (let char of messageWithoutName) {
+            if (char !== " ") { 
+                const exactColorIndex = colorPosition % colors.length;
+                const lowerColorIndex = Math.floor(exactColorIndex);
+                
+                styledMessage.push({ str: char, style: { color: colors[lowerColorIndex] } });
+                colorPosition += colorStep;
+            } else {
+                styledMessage.push({ str: " " }); // Keep spaces normal
+            }
+        }
+        
+        // Add the entity name in yellow
+        for (let char of entityName) {
+            styledMessage.push({ str: char, style: { color: "#FFFF00" } }); // Yellow color
+        }
+        
+        // Broadcast the styled message to all players
+        api.broadcastMessage(styledMessage);
+    }
+    // If player is not the owner, do nothing
+}
+
+function styTxt(l){let n=styTxt;if(n.e||(n.e={c:"color",w:"fontWeight",st:"fontStyle",s:"fontSize",o:"opacity"},n.t=/(\\\<)|<(st|[cworis]) *([^>]+)?>/g),l=="")return[""];const r=[],e=new Map;let t="",c=0;for(let{index:f,0:u,1:a,2:o,3:i}of[...l.matchAll(n.t),{index:l.length}]){if(t+=l.slice(c,f),c=f+(u?.length??0),a){t+="<";continue}if(t&&(r.push(e.size?{str:t,style:Object.fromEntries(e)}:t),t=""),f!=l.length)if(o=="r")e.clear();else if(o=="i"&&i){const s=Object.fromEntries(e);delete s.fontStyle,r.push({icon:i,style:s})}else{let s=n.e[o];i?e.set(s,o=="o"?Number(i):i):e.delete(s)}}return r}
+let playerColors = {};  // Stores random colors for players
+let chatTimers = {};  // Controls wait time before shrinking
+let chatProgress = {};  // Tracks chat animation per player
+
+// Assign random colors to players when they join
+onPlayerJoin = (playerId) => {
+    let randomColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    playerColors[playerId] = randomColor;  // Save player's color
+};
+
+// Tick function controls expansion, pause, and shrinking phases
+tick = (dt) => {
+    let playerIds = api.getPlayerIds();
+    playerIds.forEach(playerId => {
+        if (chatTimers[playerId]) {
+            chatTimers[playerId] -= dt / 1000;  // Decrease timer in seconds
+            if (chatTimers[playerId] <= 0) {
+                chatProgress[playerId].isShrinking = true;  // Start shrinking phase
+                chatTimers[playerId] = null;  // Remove wait timer
+
+                // **Reset shrinking sequence correctly**
+                let chatMessage = chatProgress[playerId].fullMessage;  // Get full message
+                chatProgress[playerId].stages = [];  // Reset for shrinking phase
+                for (let i = chatMessage.length; i >= 1; i--) {
+                    chatProgress[playerId].stages.push(chatMessage.slice(0, i));  // Shrinking effect
+                }
+            }
+        }
+
+        if (chatProgress[playerId] && chatProgress[playerId].stages.length > 0) {
+            let nextStage = chatProgress[playerId].stages.shift();  // Get next stage
+
+            if (nextStage === "WAIT") return;  // Pause before shrinking
+
+            api.setTargetedPlayerSettingForEveryone(playerId, "nameTagInfo", {
+                backgroundColor: "#FFFFFF",
+                content: styTxt(`<c black><w lighter>${nextStage}`),  
+                subtitle: styTxt(`<w bold>${api.getEntityName(playerId)}`),
+                subtitleBackgroundColor: "transparent"
+            }, true);
+        }
+
+        // **Final Cleanup: Ensure it disappears completely**
+        if (chatProgress[playerId] && chatProgress[playerId].isShrinking && chatProgress[playerId].stages.length === 0) {
+            api.setTargetedPlayerSettingForEveryone(playerId, "nameTagInfo", {
+                content: [],  // Clears chat bubble
+                subtitle: styTxt(`<c white><w bold>${api.getEntityName(playerId)}`),
+                subtitleBackgroundColor: "transparent"
+            }, true);
+            delete chatProgress[playerId];  // Remove animation tracking
+        }
+    });
+};
+
+// Handle chat message animation (Expands → Waits → Shrinks)
+onPlayerChat = (playerId, chatMessage, channelName) => {
+    chatTimers[playerId] = 5;  // Set timer for shrinking after 5 seconds
+    let nameColor = playerColors[playerId] || "#FFFFFF";  // Assign random color
+    chatProgress[playerId] = { fullMessage: chatMessage, stages: [], isShrinking: false };
+
+    let mid = Math.floor(chatMessage.length / 2);
+
+    // **Phase 1: Expand from middle outward**
+    for (let i = 0; i <= mid; i++) {
+        let left = chatMessage.slice(mid - i, mid);
+        let right = chatMessage.slice(mid, mid + i + 1);
+        chatProgress[playerId].stages.push(left + right);
+    }
+
+    // **Phase 2: Introduce 5-second delay before shrinking**
+    chatTimers[playerId] = 5;  // Activate wait period
+    chatProgress[playerId].stages.push("WAIT");
+
+    // **Broadcast the message to the chat**
+    let formattedMessage = [
+        { str: `${api.getEntityName(playerId)}:`, style: { color: nameColor, fontWeight: "bold" } },
+        { str: ` ${chatMessage}`, style: { color: "#FFFFFF" } }
+    ];
+    api.broadcastMessage(formattedMessage);  // Send formatted chat
+
+    return null;  // Suppress default message
+};
 ```
 ### Rendering
 #### Music \( World Code + Code Block \)
