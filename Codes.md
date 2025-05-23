@@ -295,7 +295,7 @@ api.broadcastMessage([{str:"[⚡Super] ", style:{color:"Yellow", fontWeight:"0",
 ```js
 api.broadcastMessage([{str:"Sub", style:{color:"White", fontWeight:"0", fontSize:"100px", fontStyle:"", opacity:1}}])
 ```
-#### Styling Code \(Credit to FrostyCaveman1\)
+#### Styling Code \(Credit to `FrostyCaveman1`\)
 ```js
 function styTxt(text) {
     let fn_ = styTxt
@@ -1160,7 +1160,43 @@ function tick() {
     }
 }
 ```
-#### Chat JavaScript \(Credit to FrostyCaveman1\)
+#### setTimeout v3 \(credits to `sulfrox`\)
+```js
+"use strict";
+
+let TickNum=0;
+
+let IterationNum=0; //interates through Timer_Delay_Dictionary
+let sub_iteration_num=0;
+let Timer_Delay_Dictionary={};
+
+
+function tick() {
+    ++TickNum;
+    for(;IterationNum<=TickNum;sub_iteration_num=0, ++IterationNum) {
+        if(!(IterationNum in Timer_Delay_Dictionary))continue;
+        let arr = Timer_Delay_Dictionary[IterationNum];
+        let len = arr.length;
+        for(;sub_iteration_num<len;++sub_iteration_num) {
+            arr[sub_iteration_num]();
+        }
+        delete Timer_Delay_Dictionary[IterationNum];
+    }
+}
+
+function setTimeout(fn, delay) {
+    if(typeof fn!=="function")throw new TypeError("not a function");
+    let execution_tickNum = TickNum+Math.floor(delay/20);
+    let arr;
+    if(execution_tickNum in Timer_Delay_Dictionary) {
+        arr = Timer_Delay_Dictionary[execution_tickNum];
+    } else {
+        arr = Timer_Delay_Dictionary[execution_tickNum] = [];
+    }
+    arr.push(fn);
+}
+```
+#### Chat JavaScript \(Credit to `FrostyCaveman1`\)
 ```js
 function offsetPos(p, ...o) { return p.map((c, i) => c + o[i]) }
 function floorPos(p) { return p.map(Math.floor) }
