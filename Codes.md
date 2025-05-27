@@ -1751,6 +1751,74 @@ function getData(pos) {
     return ret;
 }
 ```
+#### Command Engine
+Now you can create your own commands! Add this code to your **World Code**: 
+```js
+/* Author @WorldBuilder2048 (You can delete this comment) */
+function bloxdCreateCommand(commandName,func,...syntax){if(typeof dataBloxdCC=="undefined"){dataBloxdCC=[]}dataBloxdCC.push({name:commandName,func:func,syntax:syntax})}function playerCommand(plId,command){plIdCommand=plId;for(i=0;i<dataBloxdCC.length;i++){if(dataBloxdCC[i].name==command.split(" ",1).join("")){this[dataBloxdCC[i].func](...command.split(" ").slice(1,dataBloxdCC[i].syntax.length+1))}}return false}
+```
+How to create a command? To create a command, you need to register the command and write code for it in **Code Block** or in **World Code:**
+
+**First:**
+You need to register the command:
+```js
+bloxdCreateCommand(commandName, func, ...syntax)
+```
+Example: 
+```js
+bloxdCreateCommand("give", "giveCodeFucn", "plName", "Item", "Count")
+```
+
+**Second:**
+You need to write code for the command, for this you need to create a function with the name in the second parameter in bloxdCreateCommand.
+Example: 
+```js
+function helpCommFunc() {api.broadcastMessage(`Player ${api.getEntityName(plIdCommand)} asked for help!`)}
+```
+
+**__Tip!:__**
+
+With **plIdCommand** you can get the ID of who wrote the command!
+
+**___And...___**
+
+If you need to create a parameter with spaces, you can add this to your code: 
+```js
+str.replaceAll("_", " ")
+```
+#### Command Engine
+Use this code to create your own commands easily. Paste the following code in world code:
+```js
+function playerCommand(e,r){let s=r.split(" "),n=commands[s[0]];if(n&&n.func){let r=api.getEntityName(e);if(permissions[r]&&permissions[r].includes(n.permission)){let r=s.slice(1);try{n.func(e,r)}catch(r){api.sendMessage(e,r.name+": "+r.message,{color:"rgba(254,157,135,255)"})}return!0}try{throw new CommandError("You don't have the needed permission '"+n.permission+"'")}catch(r){api.sendMessage(e,r.name+": "+r.message,{color:"rgba(254,157,135,255)"})}return!0}}class __A__ extends Error{constructor(e){super(e),this.name="Error in command"}}CommandError=__A__;
+
+commands = {}
+permissions = {}
+```
+Create new commands with entries in the commands object like this:
+```js
+commands.yourCommandName = {
+        func: (player, args) => {
+            /*
+                        Your code here
+                        */
+        },
+        permission:   
+                  "examplePermission"
+    }
+```
+
+the parameter ```args``` is an array with all arguments that have been given to the command splitted by a space. ```permission``` means an permission that is needed to execute the command, give permissions (in world code too) like following:
+```js
+permissions.playerNameToGetPermission = ["examplePerm1", "examplePerm2"]
+```
+Important: You need to paste the minified code before the place where you set permissions!
+
+Sometimes you need to cause an error in command (e.g. when wrong arguments are used). You can cause an error with 
+```js
+throw new CommandError("Your custom error message")
+```
+
+Thats all!
 ### Rendering
 #### Music \( World Code + Code Block \)
 World Code
