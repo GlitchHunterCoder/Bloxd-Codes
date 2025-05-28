@@ -671,6 +671,62 @@ tick = () => {
     }
 };
 ```
+#### Achievements
+✅️How to use:
+```js
+progressChecker(playerId, "Achievement Name")
+```
+Call this function to unlock an achievement for a player.
+✅️How to add achievements:
+```js
+"Hello Bloxd": { // Achievement name
+        description: "hello bloxd", // The actual text shown to the player
+        parent: null, // Set this to require another achievement before this one can be unlocked
+        saveSlot: 0, // Achievements are stored in custom attributes of books in the Moonstone Chest. This field specifies which slot to save the data in. Slot 0 is recommended for combat-related achievements, slot 1 for livelihood-related ones, and slot 2 for hidden achievements. (You're not strictly required to follow this, but it's recommended to avoid "argument too large" errors.)
+        icon: "trophy", // The icon displayed when the achievement is unlocked. Be careful: if you specify an invalid icon, nothing will be shown.
+        isSecret: false, // A boolean indicating whether this is a secret achievement. If true, the text color will be purple and the message will say "has completed the challenge".
+        isGoal: false // A boolean indicating whether this is a goal achievement. If true, the message will say "has reached the goal". Do not set both `isSecret` and `isGoal` to true at the same time.
+    },
+```
+Please add these to achievementData
+```js
+e = "setMoonstoneChest"; e += "ItemSlot";i = "getMoonstoneChest"; i += "ItemSlot";o = "getEnti"; o += "tyName";
+getName = api[o];setSlot = api[e];getSlot = api[i];
+const achievementData = {
+    "Hello Bloxd": {
+        description: "hello bloxd",
+        parent: null,
+        saveSlot: 0,
+        icon: "trophy",
+        isSecret: false,
+        isGoal: false
+    },
+};
+
+onPlayerJoin = (playerId) => {
+    ["Released_Combat","Released_livelihood","Released_hidden"].forEach((k,i)=>getSlot(playerId,i)||setSlot(playerId,i,"Book",1,{customAttributes:{[k]:[]}}));
+    
+    progressChecker(playerId, "Hello Bloxd")
+};
+
+function progressChecker(p, n) {
+    const d = achievementData[n];
+    if (!d) return;
+    const { saveSlot: s, description: desc, parent: par, isSecret: sec, icon: i, isGoal: g } = d;
+    const k = ["Released_Combat", "Released_livelihood", "Released_hidden"][s];
+    const itm = getSlot(p, s);
+    if (!itm) return;
+    const a = itm.attributes?.customAttributes?.[k] ?? [];
+    if (a.includes(n) || (par && !a.includes(par))) return;
+    setSlot(p, s, "Book", 1, { customAttributes: { [k]: [...a, n] } });
+    const t = sec ? "Challenge Complete!" : g ? "Goal Reached!" : "Advancement Made!";
+    const c = sec ? "#AA00AA" : "#DFD000";
+    api.sendTopRightHelper(p, i, `${t}\n[${desc}]`, { duration: 8, width: 300, height: 90, color: c, iconSizeMult: 4, fontSize: "20px" });
+    api.sendMessage(p, [{ str: `✅️${t}\n`, style: { color: c, fontWeight: "bold", fontSize: "18px" } }, { str: desc, style: { fontWeight: "lighter", fontSize: "16px" } }]);
+    const act = sec ? "has completed the challenge " : g ? "has reached the goal " : "has made the advancement ";
+    api.broadcastMessage([{ str: getName(p) + " " + act, style: { color: "white", fontWeight: "lighter" } }, { str: `[${desc}]!`, style: { color: sec ? "#AA00AA" : "lightgreen", fontWeight: "lighter" } }]);
+}
+```
 ### PvP Codes
 #### Amputation Code \(Credit to `MrChestplate`\) \(NO CREDIT TO HIS LICENSE HE PUT IN CODE, see other for license\)
 ```js
