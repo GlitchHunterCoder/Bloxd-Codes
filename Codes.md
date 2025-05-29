@@ -1167,6 +1167,235 @@ onPlayerClick=e=>{if(api.getPlayerDbId(e)==ownerDbId){let t=api.getHeldItem(e);i
 onBlockStand=o=>{let t=api.getPosition(o);for(let e=0;e<3;e++){let n=api.getBlockTypesPlayerStandingOn(o);n.includes("Block of Iron")&&(t=api.getPosition(o),t[1]+=1,api.setPosition(o,t)),!(n.includes("Spawn Block (Gray)")&&n.includes("Spawn Block (Gray)|meta|rot3"))&&(n.includes("Spawn Block (Gray)")&&(t[0]+=0,t[1]+=0,t[2]+=-1,api.setPosition(o,t)),n.includes("Spawn Block (Gray)|meta|rot3")&&(t[0]+=0,t[1]+=0,t[2]+=1,api.setPosition(o,t))),!(n.includes("Spawn Block (Gray)|meta|rot2")&&n.includes("Spawn Block (Gray)|meta|rot4"))&&(n.includes("Spawn Block (Gray)|meta|rot2")&&(t[0]+=-1,t[1]+=0,t[2]+=0,api.setPosition(o,t)),n.includes("Spawn Block (Gray)|meta|rot4")&&(t[0]+=1,t[1]+=0,t[2]+=0,api.setPosition(o,t)))}};
 //end of code for tp blocks
 ```
+#### setTimeOut \(Credit to `FrostyCaveman`\[\]\)
+Efficient Timeout and Interval functions. Don't reinvent the wheel by doing everything inside the one and only tick callback manually. This does the same thing.
+
+I named them "Tick" to prevent confusion. **1 tick = 50ms**, we can't have smaller delays.
+thisPos and myId are broken due to an unexpected behavior with world callbacks. Do `pos = thisPos` at the beginning of code blocks and use that for now.
+
+**Paste anywhere** in world code, like at the end of it, and **forget about it**.
+```js
+var tickTimers
+function setTickTimeout(cb, delay = 1, _repeat) {
+    const timer = [cb, api.now() + delay * 50, delay, _repeat]
+    return (tickTimers ??= new Set()).add(timer), timer
+}
+function setTickInterval(cb, delay) { return setTickTimeout(cb, delay, true) }
+function clearTickTimeout(timer) { tickTimers?.delete(timer) }
+function clearTickInterval(timer) { clearTickTimeout(timer) }
+
+tick = () => {
+    if (tickTimers?.size) {
+        const now = api.now()
+        for (const timer of tickTimers) {
+            const [cb, time, delay, repeat] = timer
+            if (now >= time) {
+                try { cb() }
+                catch (err) { api.broadcastMessage("Error in tick timer: " + err, { color: "#ff9d87" }) }
+                if (repeat) timer[1] = now + delay * 50
+                else tickTimers.delete(timer)
+            }
+        }
+    }
+}
+```
+ 
+**Usage**
+```js
+const then = Date.now()
+setTickTimeout(() => {
+    api.broadcastMessage("Should be ~500: " + (Date.now() - then))
+}, 10) // delay 10 ticks (500ms)
+
+everyTick = setTickInterval(() => { }, 1) // no need to use tick callback like before
+clearTickInterval(everyTick)
+```
+The return value of the `set` functions can be passed to `clearTickTimeout` or `clearTickInterval` to stop the timer.
+
+A helper function to delay a loop using the setTickTimeout function, add in world code:
+```js
+function tickedLoop(len, cb, delay = 1, delayFirst = false) {
+    let i = 0
+    function next() {
+        if (i < len) {
+            const ret = cb(i)
+            if (ret === null) return
+            setTickTimeout(next, ret ?? delay)
+            i++
+        }
+    }
+    delayFirst ? setTickTimeout(next, delay) : next()
+}
+```
+**example**
+```js
+tickedLoop(5, i => {
+    api.broadcastMessage(i + 1 + "seconds later")
+}, 20, true) // 20 tick between each iteration, delay first too
+
+let last = Date.now()
+tickedLoop(8, i => { // 0 1 2 3 4 5 6 7
+    // expected: 0 1000 1000 1000 3000 1000
+    api.broadcastMessage(i + "- delay before this iteration: " + (Date.now() - last) + "ms") 
+    last = Date.now()
+    if (i == 2) return // stop at this point in 3rd iteration (continue)
+    if (i == 2) api.broadcastMessage("wont be printed since we passed 3rd iteration")
+    if (i == 3) return 20 * 3 // in 4th iteration, delay the next iteration by 3 sec
+    if (i == 5) return null // stop loop in 6th iteration (break), 5-6-7 won't be printed
+}, 20) // default 1 sec delay, first one isn't delayed
+
+const arr = ["a", "b", "c"] // iterate an array with 50ms delay
+tickedLoop(arr.length, i => api.broadcastMessage(arr[i]), 1)
+0
+```
+#### setTimeOut \(Credit to `Mittens` \[DC\]\)
+```js
+const bloxdTimers = (function () {
+  "use strict";
+  /**
+   * @type {([number, function, boolean, number, []])[]}
+   */
+  const timers = [];
+  /**
+   * @type {[number, function, boolean, number, []]}
+   */
+  let timer = null;
+  /**
+   * @param {[number, function, boolean, number, []]} timer
+   * @param {number|undefined} elapsed when to call the cbf; use `undefined` to use `now + time`
+   * @param {Function} cbf the call back function
+   * @param {boolean} repeat repeat the cbf again if `true`
+   * @param {number} time the time for when to call the cbf
+   * @param {any[]} functionArgs optional arguments to call your cbf with
+   * @returns the timer obj reference use for `push` and `delete`, **!!!do not change the first element!!!**
+   */
+
+  let add = (timer) => {
+    timer[0] ??= Date.now() + timer[3];
+    let elapsed = timer[0],
+      i = 0,
+      add = timers.length + 1,
+      b,
+      entry;
+    while (add > 1) {
+      let iElapsed = timers[i + (add = Math.ceil((b = add / 2))) - 1][0];
+      if (iElapsed > elapsed) {
+        i += Math.floor(b);
+      }
+    }
+    timers.splice(i, 0, (entry = timer));
+    return entry;
+  };
+
+  return {
+    tick() {
+      api.log(timers);
+      timer = timer == null ? timers.pop() : (add(timer), timers.pop());
+
+      while (timer && timer[0] <= Date.now()) {
+        let result = timer[1](timer[4]);
+        /* define what to do with yor function returns here! */
+        if (timer[2]) {
+          add(((timer[0] = undefined), timer));
+        }
+        timer = timers.pop();
+      }
+      // if time is not elapsed
+      if (timer) {
+        timers.push(timer);
+        timer = null;
+      }
+    },
+    get length() {
+      return timers.length;
+    },
+    /**
+     *
+     * @param {function} cbf the call back function
+     * @param {number} time
+     * @param {any[]} cbfArgs arguments to invoke the cbf with
+     * @returns the timer obj reference
+     */
+    setTimeout: (cbf, time = 3e3, cbfArgs) =>
+      /* //   if (cbfArgs !== undefined && !Array.isArray(cbfArgs)) {
+        //     throw new Error("parameter cbfArgs expected to be an array");
+        //   }*/
+      add([undefined, cbf, !1, time, cbfArgs]),
+    /**
+     *
+     * @param {function} cbf the call back function
+     * @param {number} time
+     * @param {any[]} cbfArgs arguments to invoke the cbf with
+     * @returns the timer obj reference
+     */
+    setInterval: (cbf, time = 3e3, cbfArgs) =>
+      /* //   if (cbfArgs !== undefined && !Array.isArray(cbfArgs)) {
+          //     throw new Error("parameter cbfArgs expected to be an array");
+          //   }*/
+      add([undefined, cbf, !0, time, cbfArgs]),
+    removeTimer: (e) => timers.splice(timers.indexOf(e), 1),
+    isValid: (e) => timers.indexOf(e) >= 0,
+  };
+})();
+```
+usage: 
+```js
+//dont forget to run the system with 'bloxdTimers.tick();'
+tick = () => {
+  bloxdTimers.tick();
+};
+
+bloxdTimers.setInterval(
+  () => {
+    api.log("interval1");
+  },
+  3000,
+  []
+);
+onPlayerChat = (pId, str) => {
+  bloxdTimers.setTimeout(
+    (args) => {
+      let [pId, str] = args;
+      api.log("(2 sek after:)");
+      api.log(`${pId} said "${str}"`);
+    },
+    2000,
+    [pId, str]
+  );
+};
+
+```
+#### setTimeOut \(Credit to `WorldBuilder2048` \[DC\]\)
+Use this code in world code and use bloxdSetTimeout(functionName, time) to use setTimeout!
+**Code:** 
+```js
+function bloxdSetTimeout(functionName,time){dataBloxdST={ft:time,n:0,f:functionName}}function tick(){if(dataBloxdST!=null){if(dataBloxdST.n==dataBloxdST.ft){this[dataBloxdST.f](),dataBloxdST=null}else{dataBloxdST.n++}}}
+```
+
+**Example:** 
+```js
+function bloxdSetTimeout(functionName,time){dataBloxdST={ft:time,n:0,f:functionName}}function tick(){if(dataBloxdST!=null){if(dataBloxdST.n==dataBloxdST.ft){this[dataBloxdST.f](),dataBloxdST=null}else{dataBloxdST.n++}}}
+
+bloxdSetTimeout("test", 40)
+function test() {console.log("Hello World")}
+```
+In this Example function test will be executed after 40 ticks(2 seconds).
+
+**Usage:** 
+```js
+bloxdSetTimeout(functionName, time)
+
+functionName - name of function, string, example: bloxdSetTimeout("test", ...), function test() {...}
+
+time - time in game ticks(1 tick = 50ms, 20 ticks = 1sec, etc.), number, example: bloxdSetTimeout(..., 40)
+```
+**Cons of this code:**
+
+Can't work 2 and more timeouts simultaneously.
+
+Can't use arguments in function.
+
+Can't stop timeout.
 #### setTimeOut \(Credit to `Tridentify` \[DC\]\)
 The time delay function works just like the `setTimeout` system.
 It delays code for a certain period of time (measured in ticks) and then runs it after that period of time is over.
