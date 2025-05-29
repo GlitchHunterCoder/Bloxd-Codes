@@ -1167,6 +1167,36 @@ onPlayerClick=e=>{if(api.getPlayerDbId(e)==ownerDbId){let t=api.getHeldItem(e);i
 onBlockStand=o=>{let t=api.getPosition(o);for(let e=0;e<3;e++){let n=api.getBlockTypesPlayerStandingOn(o);n.includes("Block of Iron")&&(t=api.getPosition(o),t[1]+=1,api.setPosition(o,t)),!(n.includes("Spawn Block (Gray)")&&n.includes("Spawn Block (Gray)|meta|rot3"))&&(n.includes("Spawn Block (Gray)")&&(t[0]+=0,t[1]+=0,t[2]+=-1,api.setPosition(o,t)),n.includes("Spawn Block (Gray)|meta|rot3")&&(t[0]+=0,t[1]+=0,t[2]+=1,api.setPosition(o,t))),!(n.includes("Spawn Block (Gray)|meta|rot2")&&n.includes("Spawn Block (Gray)|meta|rot4"))&&(n.includes("Spawn Block (Gray)|meta|rot2")&&(t[0]+=-1,t[1]+=0,t[2]+=0,api.setPosition(o,t)),n.includes("Spawn Block (Gray)|meta|rot4")&&(t[0]+=1,t[1]+=0,t[2]+=0,api.setPosition(o,t)))}};
 //end of code for tp blocks
 ```
+#### setTimeOut \(Credit to `Tridentify` \[DC\]\)
+The time delay function works just like the `setTimeout` system.
+It delays code for a certain period of time (measured in ticks) and then runs it after that period of time is over.
+***How to install***
+Go to world code and paste *Code A* (given below)
+**CODE A**
+```js
+"undefined"==typeof waitlist&&"undefined"==typeof funcArguments&&(waitlist={},funcArguments={}),time={createDelay(e,n,o,t){if("number"==typeof e&&e>0&&!0===Number.isInteger(e)&&"string"==typeof n&&"function"==typeof o&&("boolean"==typeof t||void 0==t))waitlist[n]=e,funcArguments[n]=o,!0===t&&api.broadcastMessage("Waitlist updated\ndelayId: "+n+"\ndelayTicks: "+e);else throw Error("Unable to create new delay")},now:()=>Date.now()},tick=e=>{for(delayKey in waitlist)waitlist[delayKey]-=1,0===waitlist[delayKey]&&(funcArguments[delayKey](),waitlist[delayKey]=void 0)};
+```
+***How to use***
+Format:
+```js
+time.createDelay(delayInTicks, delayId, delayedFunction, showStatsPopup)
+```
+- *parameter* `delayInTicks` - The number of ticks the code should be delayed for. Every tick is 50ms.
+- *parameter* `delayId` - The id of the delay. When you create a new `delayId`, a new delay will be created. When the same `delayId` is used, the original delay will be **overwritten**, cancelling the old one and running the new one. When the delay is over or it has been executed, the `delayId` will be disposed.
+- *parameter* `delayedFunction` - The code to be executed after the delay ends.
+- parameter `showStatsPopup` - Optional. When left undefined, is automatically read as false. Inputting true broadcasts a message about the stats of the new delay created.
+
+Example Usage:
+```js
+time.createDelay(20, "test", () => { api.log("Hi!") }, true)
+```
+The text `"Hi!"` is logged after 20 ticks with the `delayId` of `"test"`.
+The stats popup is set to true, broadcasting its stats.
+
+***Note:***
+When using the code in a code block, please remember to put
+`id = myId; pos = thisPos`
+before of it, due to unexpected behavior with world code.
 #### setTimeOut v1 World Code \( + Code Block Usage\) \(credits to `sulfrox`\)
 World Code \(Minified\)
 ```js
