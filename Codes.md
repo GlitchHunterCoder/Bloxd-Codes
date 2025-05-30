@@ -1179,31 +1179,30 @@ function onPlayerAttemptOpenChest(i, x, y, z, m) {if(m) return "preventOpen";   
 ```
 
 Usage:
-# setTimeout:
+**setTimeout:**
 ```js
 vvt.timeout(name,fn,time)
 ```
-clear it:
+*clear it:*
 ```js
 vvt.clearTimeout(name)
 ```
-# setInterval:
+**setInterval:**
 ```js
 vvt.interval(name,fn,time)
 ```
-clear it:
+*clear it:*
 ```js
 vvt.clearInterval(name)
 ```
-# Store Data in moonstone chests:
-store the data:
+**Store Data in moonstone chests:**
+*store the data:*
 ```js
 vvt.storeValue(id,name,value)
 ```
-get the value of data:
+*get the value of data:*
 ```js
 vvt.getStoredValue(id,name)
-```
 ```
 #### setTimeOut \(Credit to `FrostyCaveman`\[DC\]\)
 Efficient Timeout and Interval functions. Don't reinvent the wheel by doing everything inside the one and only tick callback manually. This does the same thing.
