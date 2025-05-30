@@ -1167,7 +1167,45 @@ onPlayerClick=e=>{if(api.getPlayerDbId(e)==ownerDbId){let t=api.getHeldItem(e);i
 onBlockStand=o=>{let t=api.getPosition(o);for(let e=0;e<3;e++){let n=api.getBlockTypesPlayerStandingOn(o);n.includes("Block of Iron")&&(t=api.getPosition(o),t[1]+=1,api.setPosition(o,t)),!(n.includes("Spawn Block (Gray)")&&n.includes("Spawn Block (Gray)|meta|rot3"))&&(n.includes("Spawn Block (Gray)")&&(t[0]+=0,t[1]+=0,t[2]+=-1,api.setPosition(o,t)),n.includes("Spawn Block (Gray)|meta|rot3")&&(t[0]+=0,t[1]+=0,t[2]+=1,api.setPosition(o,t))),!(n.includes("Spawn Block (Gray)|meta|rot2")&&n.includes("Spawn Block (Gray)|meta|rot4"))&&(n.includes("Spawn Block (Gray)|meta|rot2")&&(t[0]+=-1,t[1]+=0,t[2]+=0,api.setPosition(o,t)),n.includes("Spawn Block (Gray)|meta|rot4")&&(t[0]+=1,t[1]+=0,t[2]+=0,api.setPosition(o,t)))}};
 //end of code for tp blocks
 ```
-#### setTimeOut \(Credit to `FrostyCaveman`\[\]\)
+#### setTimeOut \(credit to `! 🌊ObiloxYT💦` \[DC\]\)
+```js
+So, i made setTimeout and setInterval in bloxd and also made a data storing system using enchants (the enchantments customAttribute accepts anything in the object!!!!)
+# VelvetAPI
+```js
+vvt = {tickFunctions: new Map(),timeouts: new Map(),intervals: new Map(),
+addTickFn(name, fn) {if (typeof fn === "function") {this.tickFunctions.set(name, fn);}},removeTickFn(name) {this.tickFunctions.delete(name);},timeout(name, fn, delay) {const start = Date.now();const wrappedFn = () => {if (Date.now() - start >= delay) {fn();this.removeTickFn(name);}};this.addTickFn(name, wrappedFn);this.timeouts.set(name, wrappedFn);},clearTimeout(name) {this.removeTickFn(name);this.timeouts.delete(name);},interval(name, fn, interval) {const start = Date.now();const wrappedFn = () => {if (Date.now() - start >= interval) {fn();this.interval(name, fn, interval);}};this.addTickFn(name, wrappedFn);this.intervals.set(name, wrappedFn);},clearInterval(name) {this.removeTickFn(name);this.intervals.delete(name);},storeValue(i,n,v){let a = api.getMoonstoneChestItemSlot(i,1);let c = a.attributes.customAttributes.enchantments;c[n]=v;api.setMoonstoneChestItemSlot(i,1,"Dirt",1,{customAttributes:{enchantments:c}});return `Successfully set ${n} to ${v}`;},getStoredValue(i,n){let a = api.getMoonstoneChestItemSlot(i,1);let c = a.attributes.customAttributes.enchantments;let v = c[n];return v;}};
+function tick(dt) {vvt.tickFunctions.forEach(fn => fn(dt));}
+function onPlayerAttemptOpenChest(i, x, y, z, m) {if(m) return "preventOpen";     }
+```
+
+Usage:
+# setTimeout:
+```js
+vvt.timeout(name,fn,time)
+```
+clear it:
+```js
+vvt.clearTimeout(name)
+```
+# setInterval:
+```js
+vvt.interval(name,fn,time)
+```
+clear it:
+```js
+vvt.clearInterval(name)
+```
+# Store Data in moonstone chests:
+store the data:
+```js
+vvt.storeValue(id,name,value)
+```
+get the value of data:
+```js
+vvt.getStoredValue(id,name)
+```
+```
+#### setTimeOut \(Credit to `FrostyCaveman`\[DC\]\)
 Efficient Timeout and Interval functions. Don't reinvent the wheel by doing everything inside the one and only tick callback manually. This does the same thing.
 
 I named them "Tick" to prevent confusion. **1 tick = 50ms**, we can't have smaller delays.
