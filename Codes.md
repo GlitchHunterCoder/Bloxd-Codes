@@ -1433,6 +1433,12 @@ Can't work 2 and more timeouts simultaneously.
 Can't use arguments in function.
 
 Can't stop timeout.
+#### setTimeOut \(Credit to `WorldBuilder2048`\[DC\]\)
+Forget about having setTimeout and clearTimeout disabled in the game! Just copy this code into your **World Code** and now you can use timeouts without learning how to run them!:
+```js
+p=[];function setTimeout(f,t,...a){p.push(f,api.now()+t,a);return api.now()+t}function clearTimeout(i){p.splice(p.indexOf(i)-1,3)}function tick(){p.forEach((i,j)=>{if(api.now()>p[Math.floor(j/3)+1]){p[Math.floor(j/3)](...p[Math.floor(j/3)+2]),p.splice(Math.floor(j/3),3)}})}
+```
+Since this code completely replicates the syntax from JS timeouts, you can use them right now!
 #### setTimeOut \(Credit to `Tridentify` \[DC\]\)
 The time delay function works just like the `setTimeout` system.
 It delays code for a certain period of time (measured in ticks) and then runs it after that period of time is over.
