@@ -1169,9 +1169,7 @@ onBlockStand=o=>{let t=api.getPosition(o);for(let e=0;e<3;e++){let n=api.getBloc
 ```
 #### setTimeOut \(credit to `! 🌊ObiloxYT💦` \[DC\]\)
 ```js
-So, i made setTimeout and setInterval in bloxd and also made a data storing system using enchants (the enchantments customAttribute accepts anything in the object!!!!)
-# VelvetAPI
-```js
+/*So, i made setTimeout and setInterval in bloxd and also made a data storing system using enchants (the enchantments customAttribute accepts anything in the object!!!!)*/
 vvt = {tickFunctions: new Map(),timeouts: new Map(),intervals: new Map(),
 addTickFn(name, fn) {if (typeof fn === "function") {this.tickFunctions.set(name, fn);}},removeTickFn(name) {this.tickFunctions.delete(name);},timeout(name, fn, delay) {const start = Date.now();const wrappedFn = () => {if (Date.now() - start >= delay) {fn();this.removeTickFn(name);}};this.addTickFn(name, wrappedFn);this.timeouts.set(name, wrappedFn);},clearTimeout(name) {this.removeTickFn(name);this.timeouts.delete(name);},interval(name, fn, interval) {const start = Date.now();const wrappedFn = () => {if (Date.now() - start >= interval) {fn();this.interval(name, fn, interval);}};this.addTickFn(name, wrappedFn);this.intervals.set(name, wrappedFn);},clearInterval(name) {this.removeTickFn(name);this.intervals.delete(name);},storeValue(i,n,v){let a = api.getMoonstoneChestItemSlot(i,1);let c = a.attributes.customAttributes.enchantments;c[n]=v;api.setMoonstoneChestItemSlot(i,1,"Dirt",1,{customAttributes:{enchantments:c}});return `Successfully set ${n} to ${v}`;},getStoredValue(i,n){let a = api.getMoonstoneChestItemSlot(i,1);let c = a.attributes.customAttributes.enchantments;let v = c[n];return v;}};
 function tick(dt) {vvt.tickFunctions.forEach(fn => fn(dt));}
